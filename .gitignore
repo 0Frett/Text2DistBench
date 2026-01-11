@@ -1,0 +1,12 @@
+.env
+bash/*
+data/*
+models/*
+outputs/*
+**/__pycache__/
+env/*
+turin_env/*
+deprecate/*
+bash/*
+figures/*
+experiment_demo/*
