@@ -32,7 +32,7 @@ def main(
 
     movie_info = []
     cnt = 0
-    movies = ["Him", "Superman"] + movies
+    # movies = ["Him", "Superman"] + movies
     for movie_title in tqdm(movies, desc="Downloading movie details"):
         try:
             info = client.get_movie_info(movie_title)
@@ -41,9 +41,9 @@ def main(
             # if not info.get("title"):
             #     print(f"Skipping '{movie_title}': missing Title")
             #     continue
-            if not info.get("summary"):
-                print(f"Skipping '{movie_title}': missing Summary")
-                continue
+            # if not info.get("summary"):
+            #     print(f"Skipping '{movie_title}': missing Summary")
+            #     continue
             if not info.get("top5cast"):
                 print(f"Skipping '{movie_title}': missing Casts")
                 continue

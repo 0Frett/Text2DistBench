@@ -60,7 +60,7 @@ def single_movie_retrieval(
     print("Running LLM validation on retrieved videos...")
     for vid in tqdm(video_ids, desc=f"LLM Filtering"):
         snippet = yt.fetch_snippet(vid)
-        response = llm.generate(
+        response = llm.annot_generate(
             prompt=PROMPT_TEMPLATE.VIDEO_VALIDATION_TEMPLATE.format(
                 query=search_query,
                 title=snippet['title'], 

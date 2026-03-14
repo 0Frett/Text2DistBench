@@ -1,103 +1,17 @@
 import os
-import threading
 import time
-from queue import Queue
-from typing import List
 from openai import OpenAI
 from dotenv import load_dotenv
-import ipdb
-from gen_structs import GenerateOutput
+from gen_structs import GenerateOutput, AnnotGenerateOutput
 load_dotenv()
 
-
-
-class OpenAIWorker(threading.Thread):
-    def __init__(self, queue: Queue, model: str, api_key: str, max_tokens: int, rate_limit_per_min: int):
-        threading.Thread.__init__(self)
-        self.queue = queue
-        self.model = model
-        self.max_tokens = max_tokens
-        self.client = OpenAI(api_key=api_key)
-        self.rate_limit_per_min = rate_limit_per_min
-
-    def run(self):
-        while True:
-            prompt, num_return_sequences, temperature, retry, result_queue, response_format = self.queue.get()
-            for i in range(1, retry + 1):
-                try:
-                    if self.rate_limit_per_min is not None:
-                        time.sleep(60 / self.rate_limit_per_min)
- 
-                    messages = [{"role": "user", "content": prompt}]
-                    kwargs = {
-                        "model": self.model,
-                        "messages": messages,
-                        "max_completion_tokens": self.max_tokens,
-                        "temperature": temperature,
-                        "n": num_return_sequences
-                    }
-
-                    if response_format:
-                        kwargs["response_format"] = response_format
-
-                    response = self.client.chat.completions.create(**kwargs)
-                    texto = [choice.message.content for choice in response.choices]
-                    result_queue.put(GenerateOutput(text=texto))
-                    self.queue.task_done()
-                    break
- 
-                except Exception as e:
-                    print(f"An Error Occured: {e}, sleeping for {i} seconds")
-                    time.sleep(i)
-            else:
-                result_queue.put(RuntimeError(f"GPTCompletionModel failed to generate output, even after {retry} tries"))
-                self.queue.task_done()
-
-
-class OpenAIModel_parallel():
-    def __init__(self, model: str, temperature:float, max_tokens: int = 2048, num_workers: int = 2):
-        self.model = model
-        self.max_tokens = max_tokens
-        self.queue = Queue()
-        self.num_workers = num_workers
-        self.workers = []
-        self.temperature = temperature
-
-        for _ in range(num_workers):
-            api_key = os.getenv("OPENAI_API_KEYS", "").split(',')[_%num_workers]
-            worker = OpenAIWorker(self.queue, model, api_key, max_tokens, rate_limit_per_min=9999999)
-            worker.daemon = True
-            worker.start()
-            self.workers.append(worker)
-
-    def generate(
-        self,
-        prompt: str,
-        num_return_sequences: int = 1,
-        retry: int = 10,
-        response_format: dict = None,
-    ) -> GenerateOutput:
-        
-        result_queue = Queue()
-        self.queue.put(
-            (
-                prompt, 
-                num_return_sequences, 
-                self.temperature, 
-                retry, result_queue, response_format
-            )
-        )
-        result = result_queue.get()
-        if isinstance(result, Exception):
-            raise result
-        return result
 
 
 
 class OpenAIModel:
     def __init__(self, model: str, temperature: float=0.7, max_tokens: int = 10000):
         self.model = model
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY2", ""))
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
         self.temperature = temperature
         self.max_tokens = max_tokens
 
@@ -135,27 +49,26 @@ class OpenAIModel:
                 print(f"Error during generation trial_No.{attempt}: {e}")
 
 
-# class OpenAIReasoningModel():
-#     def __init__(self, model: str):
-#         self.model = model
-#         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY2", ""))
+    def annot_generate(
+        self, prompt: str,
+        num_return_sequences: int = 1
+    ) -> AnnotGenerateOutput:
+        
+        messages = [{"role": "user", "content": prompt}]
+        kwargs = {
+            "model": self.model,
+            "messages": messages,
+            "max_completion_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "n": num_return_sequences
+        }
+        response = self.client.chat.completions.create(**kwargs)
+        texto = [choice.message.content for choice in response.choices]
+        
+        return AnnotGenerateOutput(text=texto)
+    
 
-#     def generate(self, prompt, num_return_sequences: int = 1):
-#         response = self.client.responses.create(
-#             model=self.model,
-#             input=[
-#                 {
-#                     "role": "user", 
-#                     "content": prompt
-#                 }
-#             ],
-#             reasoning={
-#                 "effort": "low",
-#                 # "summary": "auto" 
-#             }
-#         )
-#         # ipdb.set_trace()
-#         return GenerateOutput(text=[response.output[1].content[0].text])
+
 
 class OpenAIReasoningModel:
     def __init__(self, model: str):
@@ -214,37 +127,6 @@ class OpenAIReasoningModel:
             except Exception as e:
                 print(f"Error during generation trial_No.{attempt}): {e}")
 
-
-    def gssgenerate(self, prompt, num_return_sequences: int = 1, retry: int = 5):
-        all_texts = []
-        for i in range(num_return_sequences):
-            last_err = None
-            for attempt in range(retry + 1):
-                try:
-                    response = self.client.responses.create(
-                        model=self.model,
-                        input=[
-                            {
-                                "role": "user",
-                                "content": prompt,
-                            }
-                        ],
-                        reasoning={
-                            "effort": "medium",
-                            "summary": "auto"
-                        },
-                    )
-                    ipdb.set_trace()
-                    all_texts.append(response.output[1].content[0].text)
-                    break  # success → go to next generation
-                except Exception as e:
-                    print(f"Attempt {attempt+1} failed for sequence {i+1}: {e}")
-                    last_err = e
-            else:
-                # all retries failed
-                raise last_err
-
-        return GenerateOutput(text=all_texts)
 
 if __name__ == "__main__":
     import json

@@ -4,7 +4,7 @@ from typing import List, Union
 from openai import OpenAI
 from dotenv import load_dotenv
 import ipdb
-from gen_structs import GenerateOutput
+from gen_structs import GenerateOutput, AnnotGenerateOutput
 load_dotenv()
 
 
@@ -17,10 +17,8 @@ class GrokModel:
             raise RuntimeError("Missing GROK_API_KEY")
         self.client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
         self.model = model
-        self.temperature = 0.6
-        self.max_tokens = 6000
 
-    def generate(self, prompt: str, retry=2):
+    def eval_generate(self, prompt: str, temperature = 0.5, retry=2):
         for trial in range(retry + 1):
             try:
                 start_time = time.time()
@@ -51,7 +49,7 @@ class GrokModel:
                 print(f"Error during generation trial_No.{trial}): {e}")
 
 
-    def gednerate(self, prompt: Union[str, List[str]], num_return_sequences=1, retry=2):
+    def annot_generate(self, prompt: Union[str, List[str]], temperature = 0.5, num_return_sequences=1, retry=2):
         def _one(p):
             last = None
             for a in range(retry + 1):
@@ -59,13 +57,13 @@ class GrokModel:
                     response = self.client.chat.completions.create(
                         model=self.model,
                         messages=[{"role": "user", "content": p}],
-                        temperature=self.temperature,
+                        temperature=temperature,
                         n=num_return_sequences,
-                        max_tokens=self.max_tokens,
+                        # max_tokens=max_tokens,
                     )
-                    ipdb.set_trace()
+                    # ipdb.set_trace()
                     
-                    return GenerateOutput(text=[c.message.content for c in r.choices])
+                    return AnnotGenerateOutput(text=[c.message.content for c in response.choices])
                 except Exception as e:
                     last = e
                     if a < retry:

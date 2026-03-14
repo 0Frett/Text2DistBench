@@ -16,14 +16,14 @@ def load_jsonl(path):
 
 
 
-def run_inference(model, input_data, nseq):
+def run_inference(model, input_data):
     """Run inference on a single model checkpoint."""
 
     results = []
     for item in tqdm(input_data):
         prompt = item["question"]
         # print(prompt)
-        gen = model.generate(prompt=prompt)
+        gen = model.eval_generate(prompt=prompt)
         pred = '<think>' + gen.reason_text + '<think>' + gen.output_text
         total_token_cnt = gen.output_token_cnt + gen.thoughts_token_cnt
         item["response"] = pred
@@ -72,9 +72,6 @@ def main():
     parser.add_argument(
         "--temperature", type=float, default=0.5
     )
-    parser.add_argument(
-        "--n", type=int, default=32
-    )
     args = parser.parse_args()
 
     os.makedirs(os.path.dirname(args.output_fp), exist_ok=True)
@@ -90,7 +87,7 @@ def main():
         temperature=args.temperature)
 
     input_data = load_jsonl(args.test_fp)
-    outputs = run_inference(model, input_data, nseq=args.n)    
+    outputs = run_inference(model, input_data)    
     save_jsonl(outputs, args.output_fp)
     print(f"[✓] Saved Output: {args.output_fp}")
 

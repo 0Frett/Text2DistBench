@@ -1,7 +1,6 @@
 import json
 import os
 import argparse
-from openai_client import OpenAIModel_parallel
 from prompts import music_datagen_prompts, movie_datagen_prompts
 
 

@@ -36,7 +36,8 @@ SYS_TEMPLATE = """
 EST_S_TEMPLATE = """
     Question:
     Read the viewer comments. 
-    How do the expressed opinions break down in terms of overall attitude toward the movie?
+    How do the expressed opinions break down in terms of overall 
+    attitude toward the movie?
     Summarize how common each stance is among the comments.
     Ensure the percentages sum to 100 and use integers only.
 
@@ -72,7 +73,6 @@ EST_T_TEMPLATE = """
     Answer:
 """
 
-
 # ---------- P(S,T): Joint stance–topic distribution ----------
 EST_T_S_TEMPLATE = """
     Question:
@@ -98,7 +98,6 @@ EST_T_S_TEMPLATE = """
     Answer:
 """
 
-
 # ---------- P(S∣T): Stance given topic ----------
 EST_S_cond_T_TEMPLATE = """
     Question:
@@ -117,7 +116,6 @@ EST_S_cond_T_TEMPLATE = """
 
     Answer:
 """
-
 
 # ---------- P(T∣S): Topic given stance ----------
 EST_T_cond_S_TEMPLATE = """
@@ -139,6 +137,7 @@ EST_T_cond_S_TEMPLATE = """
 
     Answer:
 """
+
 
 
 MOSTFREQ_S_TEMPLATE = """
@@ -168,7 +167,6 @@ MOSTFREQ_T_TEMPLATE = """
     Answer:
 """
 
-
 MOSTFREQ_T_S_TEMPLATE = """
 Question:
 Read the viewer comments. 
@@ -189,7 +187,6 @@ Output your answer in the following JSON format:
 Answer:
 """
 
-
 MOSTFREQ_S_cond_T_TEMPLATE = """
     Question:
     Read the viewer comments.
@@ -203,7 +200,6 @@ MOSTFREQ_S_cond_T_TEMPLATE = """
 
     Answer:
 """
-
 
 MOSTFREQ_T_cond_S_TEMPLATE = """
     Question:
@@ -220,86 +216,6 @@ MOSTFREQ_T_cond_S_TEMPLATE = """
     Answer:
 """
 
-
-LEASTFREQ_S_TEMPLATE = """
-    Question:
-    Read the viewer comments.
-    Which overall attitude appears least often?
-    Include cases where it may not appear at all.
-    Output your answer in the following JSON format:
-    {{
-        "stance": "<positive or negative>"
-    }}
-
-    Answer:
-"""
-
-LEASTFREQ_T_TEMPLATE = """
-    Question:
-    Read the viewer comments. 
-    Which aspect of the movie is mentioned the least?
-    Include cases where it may not appear at all.
-    Choose from: Actor, Storyline, Visual, or Audio.
-
-    Output your answer in the following JSON format:
-    {{
-        "aspect": "<one of the above aspects>"
-    }}
-
-    Answer:
-"""
-
-LEASTFREQ_T_S_TEMPLATE = """
-    Question:
-    Read the viewer comments. 
-    Considering both (1) which aspect is being talked about and (2) whether the attitude is positive or negative.
-    Which combination appears least often in the comments? 
-    Include cases where it may not appear at all.
-
-    Choose one pair from:
-    (Actor,positive), (Actor,negative),
-    (Storyline,positive), (Storyline,negative),
-    (Visual,positive), (Visual,negative),
-    (Audio,positive), (Audio,negative).
-
-    Output your answer in the following JSON format:
-    {{
-        "combination": "<one of the combinations above>"
-    }}
-
-    Answer:
-"""
-
-LEASTFREQ_S_cond_T_TEMPLATE = """
-    Question:
-    Read the viewer comments. 
-    Focus only on the comments that talk about the {topic} aspect of the movie.
-    Which attitude appears least often?
-    Include cases where it may not appear at all.
-
-    Output your answer in the following JSON format:
-    {{
-        "stance": "<positive or negative>"
-    }}
-
-    Answer:
-"""
-
-LEASTFREQ_T_cond_S_TEMPLATE = """
-    Question:
-    Read the viewer comments.
-    Focus only on the comments that express a {stance_label} attitude toward the movie.
-    Which aspect of the movie is mentioned the least?
-    Include cases where it may not appear at all.
-    Choose from: Actor, Storyline, Visual, or Audio.
-
-    Output your answer in the following JSON format:
-    {{
-        "aspect": "<one of the above aspects>"
-    }}
-
-    Answer:
-"""
 
 
 # ---------- SECONDMOST ---------- #
@@ -330,7 +246,6 @@ SECONDMOST_T_TEMPLATE = """
     Answer:
 """
 
-
 SECONDMOST_T_S_TEMPLATE = """
     Question:
     Read the viewer comments. 
@@ -351,7 +266,6 @@ SECONDMOST_T_S_TEMPLATE = """
     Answer:
 """
 
-
 SECONDMOST_S_cond_T_TEMPLATE = """
     Question:
     Read the viewer comments.
@@ -365,7 +279,6 @@ SECONDMOST_S_cond_T_TEMPLATE = """
 
     Answer:
 """
-
 
 SECONDMOST_T_cond_S_TEMPLATE = """
     Question:
@@ -381,3 +294,4 @@ SECONDMOST_T_cond_S_TEMPLATE = """
 
     Answer:
 """
+

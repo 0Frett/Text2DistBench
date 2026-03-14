@@ -22,7 +22,7 @@ def run_inference(model, input_data, nseq):
     results = []
     for item in tqdm(input_data):
         prompt = item["question"]
-        gen = model.generate(prompt=prompt)
+        gen = model.eval_generate(prompt=prompt)
         
         pred = '<think>' + gen.reason_text + '<think>' + gen.output_text
         total_token_cnt = gen.output_token_cnt + gen.thoughts_token_cnt

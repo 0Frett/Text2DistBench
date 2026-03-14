@@ -222,83 +222,6 @@ Answer:
 """
 
 
-LEASTFREQ_S_TEMPLATE = """
-Question:
-Read the movie information. 
-Which overall attitude is likely to be the least common among viewers?
-
-Output your prediction in the following JSON format:
-{{
-    "stance": "<positive or negative>"
-}}
-
-Answer:
-"""
-
-LEASTFREQ_T_TEMPLATE = """
-Question:
-Read the movie information. 
-Which aspect of the movie is viewers least likely to talk about?
-Choose from: Actor, Storyline, Visual, or Audio.
-
-Output your prediction in the following JSON format:
-{{
-    "aspect": "<one of the above aspects>"
-}}
-
-Answer:
-"""
-
-LEASTFREQ_T_S_TEMPLATE = """
-    Question:
-    Read the movie information. 
-    Considering both (1) which aspect is being talked about and (2) whether the attitude is positive or negative.
-    Which combination is least likely overall?
-
-    Choose one pair from:
-    (Actor,positive), (Actor,negative),
-    (Storyline,positive), (Storyline,negative),
-    (Visual,positive), (Visual,negative),
-    (Audio,positive), (Audio,negative).
-
-    Output your prediction in the following JSON format:
-    {{
-        "combination": "<one of the combinations above>"
-    }}
-
-    Answer:
-"""
-
-
-LEASTFREQ_S_cond_T_TEMPLATE = """
-Question:
-Read the movie information.  
-Focus on viewers who are likely to care most about the {topic} aspect of the movie.
-Which attitude is least likely among these viewers?
-
-Output your prediction in the following JSON format:
-{{
-    "stance": "<positive or negative>"
-}}
-
-Answer:
-"""
-
-LEASTFREQ_T_cond_S_TEMPLATE = """
-Question:
-Read the movie information.  
-Focus on viewers who are likely to have a {stance_label} attitude toward the movie.
-Which aspect of the movie are they least likely to mention?
-Choose from: Actor, Storyline, Visual, or Audio.
-
-Output your prediction in the following JSON format:
-{{
-    "aspect": "<one of the above aspects>"
-}}
-
-Answer:
-"""
-
 
 # ---------- SECONDMOST ---------- #
 SECONDMOST_S_TEMPLATE = """
@@ -364,7 +287,6 @@ SECONDMOST_S_cond_T_TEMPLATE = """
     Answer:
 """
 
-
 SECONDMOST_T_cond_S_TEMPLATE = """
     Question:
     Read the movie information. 
@@ -379,3 +301,5 @@ SECONDMOST_T_cond_S_TEMPLATE = """
 
     Answer:
 """
+
+

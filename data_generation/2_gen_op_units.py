@@ -40,7 +40,7 @@ def _call_models_once(models: Dict[str, Any], prompt: str) -> Dict[str, Any]:
         try:
             print("-"*50)
             # print(prompt)
-            resp = mdl.generate(prompt=prompt, num_return_sequences=1)
+            resp = mdl.annot_generate(prompt=prompt, num_return_sequences=1)
             text = resp.text[0] if hasattr(resp, "text") and isinstance(resp.text, list) else str(resp)
             out[name] = _parse_json(text)
             print(name)
@@ -287,9 +287,9 @@ def main(training_docs_dir, output_dir, domain, comment_lang, stages):
         raise ValueError("domain must be 'movie' or 'music'")
 
     models = {
-        'gpt':    OpenAIModel_parallel('gpt-4.1-mini', temperature=0, max_tokens=10000),
-        'gemini': GeminiModel(model="gemini-2.5-flash-lite", temperature=0, max_tokens=10000),
-        'grok':   GrokModel(model="grok-4-fast-non-reasoning", temperature=0, max_tokens=10000)
+        'gpt':    OpenAIModel_parallel('gpt-4o-mini', temperature=0.5, max_tokens=10000),
+        'gemini': GeminiModel(model="gemini-2.5-flash-lite"),
+        'grok':   GrokModel(model="grok-4-fast-non-reasoning")
     }
 
     time_stamp = os.path.basename(training_docs_dir)

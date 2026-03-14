@@ -1,3 +1,4 @@
+from typing import List
 
 class GenerateOutput():
     def __init__(
@@ -21,3 +22,9 @@ class GenerateOutput():
         print(f"Input Token Count: {self.input_token_cnt}")
         print(f"Output Token Count: {self.output_token_cnt}")
         print(f"Thoughts Token Count: {self.thoughts_token_cnt}")
+
+
+
+class AnnotGenerateOutput():
+    def __init__(self, text: List[str]):
+        self.text = text

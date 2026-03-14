@@ -1,12 +1,6 @@
 .env
 bash/*
 data/*
-models/*
-outputs/*
 **/__pycache__/
-env/*
-turin_env/*
-deprecate/*
-bash/*
+leibniz_env/*
 figures/*
-experiment_demo/*

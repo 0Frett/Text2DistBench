@@ -20,3 +20,4 @@ google-genai
 xai-sdk
 openai-harmony
 anthropic
+pandas

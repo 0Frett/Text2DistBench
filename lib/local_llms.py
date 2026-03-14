@@ -10,15 +10,15 @@ warnings.filterwarnings("ignore")
 load_dotenv()
 
 VLM_MODELS = [
-    # 'meta-llama/Llama-3.2-1B-Instruct',
-    # 'meta-llama/Llama-3.2-3B-Instruct',
-    # 'meta-llama/Llama-3.1-8B-Instruct',
-    # 'google/gemma-2-2b-it',
-    # 'google/gemma-2-9b-it',
-    # 'google/gemma-2-27b-it',
+    'meta-llama/Llama-3.2-1B-Instruct',
+    'meta-llama/Llama-3.2-3B-Instruct',
+    'meta-llama/Llama-3.1-8B-Instruct',
+    'google/gemma-2-2b-it',
+    'google/gemma-2-9b-it',
+    'google/gemma-2-27b-it',
     'meta-llama/Llama-3.3-70B-Instruct',
     'lambdalabs/Llama-3.3-70B-Instruct-AWQ-4bit',
-    # 'mistralai/Mistral-Small-3.1-24B-Instruct-2503',
+    'mistralai/Mistral-Small-3.1-24B-Instruct-2503',
     'google/gemma-3-4b-it',
     'google/gemma-3-12b-it',
     'google/gemma-3-27b-it',  #
@@ -29,12 +29,12 @@ VLM_MODELS = [
     'Qwen/Qwen2.5-32B-Instruct',  #
     'Qwen/Qwen3-32B-AWQ',
     'Qwen/Qwen3-32B-FP8',
-    # 'Qwen/Qwen2.5-72B-Instruct',
-    # "allenai/OLMo-2-1124-7B-Instruct",
-    # "mistralai/Mistral-Nemo-Instruct-2407",
-    # "mistralai/Ministral-8B-Instruct-2410",
-    # 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
-    # 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B',
+    'Qwen/Qwen2.5-72B-Instruct',
+    "allenai/OLMo-2-1124-7B-Instruct",
+    "mistralai/Mistral-Nemo-Instruct-2407",
+    "mistralai/Ministral-8B-Instruct-2410",
+    'deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
+    'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B',
     'Qwen/Qwen3-30B-A3B-Instruct-2507-FP8',
     'openai/gpt-oss-20b'  #
 ]

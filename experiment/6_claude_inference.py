@@ -25,11 +25,7 @@ def run_inference_batch(
     batch_size: int = 5000,
     num_return_sequences: int = 1,
 ):
-    """
-    以 Batch API 推論整份資料。
-    - 自動依 batch_size 切批（每批一次 API 呼叫，便宜 50% token）
-    - num_return_sequences > 1 時，會對每個樣本重複提交 N 份請求（在 class 內處理）
-    """
+
     n = len(input_data)
     results = []
 
@@ -56,23 +52,8 @@ def run_inference_batch(
             item["out_token_cnt"] = usage.get("output_tokens", 0)
             item['gen_time'] = "NaN"
 
-            # rec = {
-            #     "qtype": item["qtype"],
-            #     "qid": item["qid"],
-            #     "source": item["source"],
-            #     "attribute": item["attribute"],
-            #     "answer": item["answer"],
-            #     "pred": pred,
-            #     "input_token_cnt": usage.get("input_tokens", 0),
-            #     "output_token_cnt": usage.get("output_tokens", 0),
-            # }
             results.append(item)
 
-            # 可選：即時列印（大型批次可關掉以加速 I/O）
-            # print("------------------------------", flush=True)
-            # print(f"QID: {item['qid']}", flush=True)
-            # print(f"GT: {item['answer']}", flush=True)
-            # print(f"Pred: {pred}", flush=True)
 
     return results
 

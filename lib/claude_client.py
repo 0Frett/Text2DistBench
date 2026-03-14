@@ -11,12 +11,6 @@ load_dotenv()
 
 MODEL_DEFAULT = "claude-3-5-haiku-20241022"  # 或 "claude-haiku-4-5-20251001"
 
-# class GenerateOutput:
-#     def __init__(self, text: List[str], raw: Optional[Dict]=None):
-#         # text: 對應該樣本的 N 個候選（batch 以重複請求實現）
-#         self.text = text
-#         self.n = len(text)
-#         self.raw = raw  # 可選：保留原始映射資訊 (custom_id -> 原始 entry)
 
 class GenerateOutput:
     def __init__(self, text: List[str], raw: Optional[Dict]=None, usage: Optional[List[Dict]]=None):

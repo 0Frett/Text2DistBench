@@ -5,17 +5,16 @@ from typing import List
 from dotenv import load_dotenv
 import ipdb
 import time
-from gen_structs import GenerateOutput
+from gen_structs import GenerateOutput, AnnotGenerateOutput
 
 load_dotenv()
 
 class GeminiModel:
-    def __init__(self, model="gemini-2.5-pro", temperature=0.5):
+    def __init__(self, model="gemini-2.5-pro"):
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY", ""))
         self.model = model
-        self.temperature = temperature
 
-    def generate(self, prompt, retry=3):
+    def eval_generate(self, prompt, temperature=1, retry=3):
         for trial in range(retry + 1):
             try:
                 start_time = time.time()
@@ -23,7 +22,7 @@ class GeminiModel:
                     model=self.model,
                     contents=prompt,
                     config=types.GenerateContentConfig(
-                        temperature=self.temperature,
+                        temperature=temperature,
                         candidate_count=1,
                         thinking_config=types.ThinkingConfig(include_thoughts=True)
                     ),
@@ -55,7 +54,7 @@ class GeminiModel:
                 print(f"Error during generation trial_No.{trial}): {e}")
                 
  
-    def gggenerate(self, prompt, num_return_sequences=1, retry=3):
+    def annot_generate(self, prompt, temperature=0.5, num_return_sequences=1, retry=3):
         max_per_call = 5
         all_texts = []
         remaining = num_return_sequences
@@ -69,13 +68,13 @@ class GeminiModel:
                         model=self.model,
                         contents=prompt,
                         config=types.GenerateContentConfig(
-                            temperature=self.temperature,
-                            max_output_tokens=self.max_tokens,
+                            temperature=temperature,
+                        
                             candidate_count=batch_size,  # up to 8 per call
                             thinking_config=types.ThinkingConfig(include_thoughts=True)
                         ),
                     )
-                    ipdb.set_trace()
+                    # ipdb.set_trace()
                     all_texts.extend([c.content.parts[0].text for c in resp.candidates])
                     remaining -= batch_size
                     break  # success, go to next batch
@@ -86,7 +85,7 @@ class GeminiModel:
                 # if retry exhausted
                 raise last_err
 
-        return GenerateOutput(text=all_texts)
+        return AnnotGenerateOutput(text=all_texts)
 
 
 
@@ -102,7 +101,6 @@ if __name__ == "__main__":
 
     model = GeminiModel(
         model="gemini-2.5-flash",
-        temperature=0.5,
     )
     output = model.generate(prompt=q)
     output.printout()
