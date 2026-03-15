@@ -27,7 +27,7 @@ def make_qa(qtype: str, question: str, answer: Dict[str, Any], ref_dist: Dict[st
             attribute: str, video_title: str, idx: int) -> Dict[str, Any]:
     return {
         "qid": f"most_{video_title}_{qtype}_{idx}",
-        "attribute": attribute,  # "stance"/"target"/specific target/stance/"joint"
+        # "attribute": attribute,  # "stance"/"target"/specific target/stance/"joint"
         "answer": answer,
         "ref_dist": ref_dist,
         "qtype": qtype,          # P_s | P_t | P_s_cond_t | P_t_cond_s | P_ts
@@ -279,7 +279,7 @@ def main(
 
     print(f"[INFO] {len(test_qs)} test items generated.")
     save_jsonl(test_qs, output_dir, qa_type)
-    print(f"[END] Finish Generating {qa_type} Natural Benchmark to {output_dir}")
+    print(f"[END] Finish Generating {qa_type} Most-Freq Benchmark to {output_dir}")
 
 
 if __name__ == "__main__":
