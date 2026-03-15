@@ -2,29 +2,21 @@ import os
 import json
 import argparse
 from tqdm import tqdm
-import torch
-
-
-def load_jsonl(path):
-    """Load a JSONL file as a list of dictionaries."""
-    data = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            data.append(json.loads(line))
-    return data
+from io_utils import load_jsonl, save_jsonl
+from local_llms import VLLMModel
 
 
 
-def run_inference(model, input_data, n):
+def run_inference(model, input_data):
     """Run inference on a single model checkpoint."""
 
     results = []
     for item in tqdm(input_data):
         prompt = item["question"]
-        gen = model.generate(prompt=prompt, num_return_sequences=n)
-        pred = gen.text[0] if gen.n == 1 else gen.text
+        gen = model.generate(prompt=prompt, num_return_sequences=1)
+        pred = gen.output_text[0]
         input_token_cnt = gen.input_token_cnt
-        output_token_cnt = gen.output_token_cnt[0] if gen.n == 1 else gen.output_token_cnt
+        output_token_cnt = gen.output_token_cnt[0]
         
         item["response"] = pred
         item["input_token_cnt"] = input_token_cnt
@@ -37,12 +29,6 @@ def run_inference(model, input_data, n):
     return results
 
 
-
-def save_jsonl(data, path):
-    """Save list of dicts to a JSONL file."""
-    with open(path, "w", encoding="utf-8") as f:
-        for item in data:
-            f.write(json.dumps(item, ensure_ascii=False) + "\n")
 
 
 
@@ -70,9 +56,6 @@ def main():
         "--temperature", type=float, default=0.0
     )
     parser.add_argument(
-        "--n_return", type=int, default=1
-    )
-    parser.add_argument(
         "--max_model_len", type=int, default=6000
     )
     parser.add_argument(
@@ -92,8 +75,8 @@ def main():
         return
     
     print(f"[INFO] Run OpBench on Model: {args.model_id}")
-    from local_llms import vlmModel
-    model = vlmModel(
+    
+    model = VLLMModel(
         model=args.model_id,
         max_tokens=args.max_output_tokens, 
         temperature=args.temperature,
@@ -102,7 +85,7 @@ def main():
         max_model_len=args.max_model_len
     )
     input_data = load_jsonl(args.test_fp)
-    outputs = run_inference(model, input_data, args.n_return)    
+    outputs = run_inference(model, input_data)    
     save_jsonl(outputs, args.output_fp)
     print(f"[✓] Saved Output: {args.output_fp}")
 

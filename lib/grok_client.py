@@ -3,7 +3,6 @@ import os, time
 from typing import List, Union
 from openai import OpenAI
 from dotenv import load_dotenv
-import ipdb
 from gen_structs import GenerateOutput, AnnotGenerateOutput
 load_dotenv()
 
@@ -73,17 +72,3 @@ class GrokModel:
             return _one(prompt)
         else:
             return [_one(p) for p in prompt]
-
-if __name__ == "__main__":
-    import json
-    fp = "data-v6/movie/benchmark/posterior/estimation/2025-07-01_2025-09-30/en/sampled_50/P_ts.jsonl"
-    data = []
-    with open(fp, "r", encoding="utf-8") as f:
-        for line in f:
-            data.append(json.loads(line))
-    q = data[0]["question"]
-    print(q)
-
-    m = GrokModel(model="grok-4-fast-reasoning")
-    outs = m.generate(q)
-    outs.printout()

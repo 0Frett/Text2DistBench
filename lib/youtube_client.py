@@ -105,7 +105,7 @@ class YouTubeClient:
         }
 
 
-    def fetch_snippet_with_comments(self, video_id, max_page=20, max_comments=500, target_lang=None):
+    def fetch_snippet_with_comments(self, video_id, max_page=20, max_comments=500, target_lang="en"):
         data = self.fetch_snippet(video_id)
         data["comments"] = []
         next_page_token = None
@@ -240,43 +240,4 @@ class YouTubeClient:
             time.sleep(0.1)
         pbar.close()
         return video_ids
-
-
-if __name__ == "__main__":
-    youtube_client = YouTubeClient()
-    
-    # Search for playlists
-    playlist_ids = youtube_client.search_playlists(
-        keyword="Spanish Song 2025", 
-        max_results=5
-    )
-    print("Playlists found:", playlist_ids)
-    print("-----------")
-        
-    
-    for pid in playlist_ids:
-        # Fetch playlist info
-        pl_info = youtube_client.fetch_playlist_snippet(pid)
-        print(pl_info)
-        print("-----------")
-        
-        # List videos in the playlist
-        vids_in_playlist = youtube_client.list_videos_in_playlist(pid, max_page=1)
-        print("Videos in playlist:", vids_in_playlist)
-
-#     video_ids = youtube_client.search_videos(
-#         keyword="election", 
-#         channel_id="UCupvZG-5ko_eiXAupbDfxWw", 
-#         published_after="2024-01-01T00:00:00Z", 
-#         published_before="2024-12-31T00:00:00Z",
-#         max_results=2
-#     )
-#     video_data = youtube_client.fetch_snippet(video_ids[0])
-#     # print(video_data)
-
-
-
-
-
-
 

@@ -8,11 +8,14 @@ from googleapiclient.errors import HttpError
 from youtube_client import YouTubeClient
 
 
-def main(lang: str, music_pool_dir: str, output_dir: str, min_comments: int, max_snippets: int):
+def main(
+    music_pool_file: str, 
+    output_file: str, 
+    min_comments: int, 
+    max_snippets: int
+):
 
-    start_str, end_str = os.path.basename(music_pool_dir).split("_")
-    data_file = os.path.join(music_pool_dir, f"{lang}.json")
-    with open(data_file, "r", encoding="utf-8") as f:
+    with open(music_pool_file, "r", encoding="utf-8") as f:
         music_pool = json.load(f)
 
     yt = YouTubeClient()
@@ -20,14 +23,12 @@ def main(lang: str, music_pool_dir: str, output_dir: str, min_comments: int, max
 
     for snippet in tqdm(music_pool, desc="Fetching comments"):
         vid = snippet.get("vid")
-        lang = snippet.get("language")
 
         try:
             video_data = yt.fetch_snippet_with_comments(
                 vid, 
                 max_page=50, 
                 max_comments=min_comments,
-                target_lang=lang, 
             )
             comment_count = len(video_data.get("comments", []))
 
@@ -36,7 +37,6 @@ def main(lang: str, music_pool_dir: str, output_dir: str, min_comments: int, max
                 print(f"[Skip] {vid} only has {comment_count} comments.")
                 continue
 
-            video_data["lang"] = lang
             video_data['title'] = re.sub(r"[^\w\-_. ]", "_", video_data['title'])
             all_videos.append(video_data)
 
@@ -48,28 +48,25 @@ def main(lang: str, music_pool_dir: str, output_dir: str, min_comments: int, max
             print(f"[Error] Failed to fetch {vid}: {e}")
             continue
 
-    save_dir = os.path.join(output_dir, f"{start_str}_{end_str}")
-    os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, f"{lang}.json")
-
-    with open(save_path, "w", encoding="utf-8") as f:
+    os.makedirs(Path(output_file).parent, exist_ok=True)
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(all_videos, f, indent=2, ensure_ascii=False)
 
-    print(f"[End] Saved {len(all_videos)} videos to {save_path}")
+    print(f"[End] Saved {len(all_videos)} videos to {output_file}")
 
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download Music Video comments")
     parser.add_argument(
-        "--entity_pool",
+        "--entity_pool_file",
         type=str,
-        default="data/music/music_pool/2025-07-01_2025-09-30",
+        default="data/music/music_pool/2025-07-01_2025-09-30.json",
     )
     parser.add_argument(
-        "--output_dir",
+        "--output_file",
         type=str,
-        default="data-v2/music/opinion_entity",
+        default="data/music/opinion_entity/2025-07-01_2025-09-30.json",
     )
     parser.add_argument(
         "--min_comments",
@@ -82,18 +79,12 @@ if __name__ == "__main__":
         type=int,
         default=20,
     )
-    parser.add_argument(
-        "--comment_lang",
-        type=str,
-        default="en",
-        help="Language code for music videos."
-    )
+
 
     args = parser.parse_args()
     main(
-        music_pool_dir=args.entity_pool, 
-        output_dir=args.output_dir, 
+        music_pool_file=args.entity_pool_file, 
+        output_file=args.output_file, 
         min_comments=args.min_comments, 
         max_snippets=args.max_entity,
-        lang=args.comment_lang,
     )

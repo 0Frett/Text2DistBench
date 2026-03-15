@@ -3,7 +3,6 @@ from google.genai import types
 import os
 from typing import List
 from dotenv import load_dotenv
-import ipdb
 import time
 from gen_structs import GenerateOutput, AnnotGenerateOutput
 
@@ -89,19 +88,4 @@ class GeminiModel:
 
 
 
-if __name__ == "__main__":
-    import json
-    fp = "data-v5/movie/benchmark/prior/2025-07-01_2025-09-30/en/sampled_100/P_t.jsonl"
-    data = []
-    with open(fp, "r", encoding="utf-8") as f:
-        for line in f:
-            data.append(json.loads(line))
-    q = data[1]["question"]
-    print(q)
-
-    model = GeminiModel(
-        model="gemini-2.5-flash",
-    )
-    output = model.generate(prompt=q)
-    output.printout()
  

@@ -51,7 +51,8 @@ class OpenAIModel:
 
     def annot_generate(
         self, prompt: str,
-        num_return_sequences: int = 1
+        num_return_sequences: int = 1,
+        response_format: dict = None,
     ) -> AnnotGenerateOutput:
         
         messages = [{"role": "user", "content": prompt}]
@@ -62,6 +63,8 @@ class OpenAIModel:
             "temperature": self.temperature,
             "n": num_return_sequences
         }
+        if response_format:
+            kwargs["response_format"] = response_format
         response = self.client.chat.completions.create(**kwargs)
         texto = [choice.message.content for choice in response.choices]
         
@@ -73,7 +76,7 @@ class OpenAIModel:
 class OpenAIReasoningModel:
     def __init__(self, model: str):
         self.model = model
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY2", ""))
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
 
 
     def generate(self, prompt: str, retry: int = 3, effort="low") -> GenerateOutput:
@@ -127,25 +130,3 @@ class OpenAIReasoningModel:
             except Exception as e:
                 print(f"Error during generation trial_No.{attempt}): {e}")
 
-
-if __name__ == "__main__":
-    import json
-    fp = "data-v5/movie/benchmark/prior/2025-07-01_2025-09-30/en/sampled_100/P_t.jsonl"
-    data = []
-    with open(fp, "r", encoding="utf-8") as f:
-        for line in f:
-            data.append(json.loads(line))
-    # model = OpenAIModel_parallel('gpt-5-mini-2025-08-07', temperature=1, max_tokens=9999, num_workers=2)
-    model = OpenAIReasoningModel('gpt-5.1')
-    # model = OpenAIModel('gpt-4.1', temperature=0.7, max_tokens=10000)
-    q = data[0]["question"]
-    print(q)
-    # output = model.generate(
-    #     prompt=q,
-    #     retry=3,
-    # )
-    # print(output.text)
-    output = model.generate(
-        prompt=q, effort="high"
-    )
-    output.printout()

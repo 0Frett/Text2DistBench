@@ -1,6 +1,7 @@
 .env
-bash/*
-data/*
+eval
+output
+data
 **/__pycache__/
-leibniz_env/*
-figures/*
+test_env
+T2D_relevant

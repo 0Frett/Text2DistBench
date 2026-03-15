@@ -28,7 +28,7 @@ def make_qa(qtype: str, question: str, answer: Dict[str, Any],
         "qid": f"estimation_{video_title}_{qtype}_{idx}",
         "attribute": attribute,  # "stance"/"target"/specific target/stance/"joint"
         "answer": answer,
-        "qtype": qtype,          # P_s | P_t | P_s_cond_t | P_t_cond_s | P_ts
+        "qtype": qtype,
         "source": video_title,
         "question": question,
     }
@@ -269,14 +269,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--domain", type=str, choices=["movie", "music"])
     parser.add_argument("--op_units_dir", type=str,
-                        default="data/movie/opinion_units/2025-07-01_2025-09-30/en/sampled_250")
+                        default="data/movie/opinion_units/2025-07-01_2025-09-30/sampled_50")
     parser.add_argument("--output_dir", type=str,
-                        default="data/movie/benchmark/2025-07-01_2025-09-30/en/sampled_250")
+                        default="data/movie/benchmark/2025-07-01_2025-09-30/sampled_50")
     parser.add_argument("--source_docs_dir", type=str,
-                        default="data/movie/source_docs/2025-01-01_2025-08-31/en")
-    parser.add_argument("--qa_type", type=str,
+                        default="data/movie/source_docs/2025-01-01_2025-08-31")
+    parser.add_argument("--qa_type", type=str, 
                         choices=["P_s", "P_t", "P_s_cond_t", "P_t_cond_s", "P_ts"])
-    parser.add_argument("--seed", type=int, default=204, help="Random seed for shuffling comments in context.")
+    parser.add_argument("--seed", type=int, default=204)
     parser.add_argument("--prior", action="store_true")
     args = parser.parse_args()
 

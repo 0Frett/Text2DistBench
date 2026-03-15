@@ -6,17 +6,9 @@ from tqdm import tqdm
 from youtube_client import YouTubeClient
 
 
-MUSIC_SEARCH_TERMS = {
-    "en": "New English song {year}",
-    "zh": "新中文歌曲 {year}",                      # 新中文歌曲 (New Mandarin song)
-    "ja": "新しい日本の歌 {year}",                   # 新しい日本の歌 (New Japanese song)
-    "fr": "Nouvelle chanson en français {year}",  # Nouvelle chanson française (New French song)
-    "es": "Nueva canción en español {year}",      # Nueva canción en español (New Spanish song)
-}
 
 def single_channel_retrieval(
     yt: YouTubeClient,
-    lang: str,
     start_str: str, 
     end_str: str,
     max_snippets: int
@@ -25,7 +17,7 @@ def single_channel_retrieval(
     seen_vids = set()  # Track added video IDs to remove duplicates
 
     playlist_ids = yt.search_playlists(
-        keyword=MUSIC_SEARCH_TERMS[lang].format(year=start_str[:4]),
+        keyword=f"New English song {start_str[:4]}",
         max_results=10
     )
     published_after = datetime.strptime(start_str, '%Y-%m-%d')
@@ -44,7 +36,6 @@ def single_channel_retrieval(
             
             try:
                 snippet = yt.fetch_snippet(vid)
-                snippet['language'] = lang
                 date = datetime.strptime(snippet['published_time'][:10], '%Y-%m-%d')
                 if published_after <= date <= published_before:
                     all_videos.append(snippet)
@@ -60,7 +51,6 @@ def single_channel_retrieval(
 
 
 def main(
-    lang: str, 
     start_str: str,
     end_str: str, 
     output_dir: str,
@@ -68,24 +58,16 @@ def main(
 ):
 
     yt = YouTubeClient()
-    snippets = single_channel_retrieval(yt, lang, start_str, end_str, max_snippets)
+    snippets = single_channel_retrieval(yt, start_str, end_str, max_snippets)
     
-    save_dir = os.path.join(output_dir, f"{start_str}_{end_str}")
-    os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, f"{lang}.json")
+    os.makedirs(output_dir, exist_ok=True)
+    save_path = os.path.join(output_dir, f"{start_str}_{end_str}.json")
     with open(save_path, 'w', encoding='utf-8') as f:
         json.dump(snippets, f, indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download Music Snippets")
-    parser.add_argument(
-        "--lang",
-        type=str,
-        default="en",
-        choices=["en", "zh", "ja", "fr", "es"],
-        help="Language code for music data collection."
-    )
     parser.add_argument(
         "--start_str",
         type=str,
@@ -113,7 +95,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        args.lang,
         args.start_str,
         args.end_str,
         args.output_dir,

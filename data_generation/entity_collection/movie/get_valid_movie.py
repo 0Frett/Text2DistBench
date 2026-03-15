@@ -1,47 +1,32 @@
 import os
 import json
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Dict, Any
 from tqdm import tqdm
+from pathlib import Path
 from googleapiclient.errors import HttpError
 from youtube_client import YouTubeClient
-from openai_client import OpenAIModel_parallel
+from openai_client import OpenAIModel
 from prompts import movie_datagen_prompts as PROMPT_TEMPLATE
 
 
-RELEASE_TERMS = {
-    "en": "English movie trailer",
-    "zh": "中文電影預告",
-    "ja": "日本語映画予告",
-    "fr": "bande-annonce en français",
-    "es": "tráiler en español",
-}
 
-MOVIE_QUERY = {
-    "en": "{title} English movie trailer",
-    "zh": "{title} 中文電影預告",
-    "ja": "{title} 日本語映画予告",
-    "fr": "{title} bande-annonce en français",
-    "es": "{title} tráiler en español",
-}
-
-def gen_query(movie_snippet, lang):
+def gen_query(movie_snippet):
     title = movie_snippet.get("aka") or movie_snippet.get("title")
-    return f"{title} {RELEASE_TERMS[lang]}"
+    return f"{title} English movie trailer"
 
 
 def single_movie_retrieval(
     yt: YouTubeClient,
-    llm: OpenAIModel_parallel,
-    lang: str,
+    llm: OpenAIModel,
     start_str: str, 
     end_str: str,
     movie_snippet: Dict[str, Any],
     min_comments: int
 ):
 
-    search_query = gen_query(movie_snippet, lang)
+    search_query = gen_query(movie_snippet)
     movie_title = movie_snippet.get('title', '')
     print(f"\n=== Processing movie: {movie_title} ===")
     print(f"Search query: {search_query}")
@@ -91,8 +76,7 @@ def single_movie_retrieval(
             snippet = yt.fetch_snippet_with_comments(
                 vid, 
                 max_page=50, 
-                max_comments=500, 
-                target_lang=lang
+                max_comments=500,
             )
             comments.extend(snippet["comments"])
             comments_source.append((vid, snippet["title"]))
@@ -118,24 +102,23 @@ def single_movie_retrieval(
 
 
 def main(
-    movie_pool_dir: str, 
-    output_dir: str, 
+    movie_pool_file: str, 
+    output_file: str, 
     min_comments: int, 
     max_snippets: int,
-    lang: str,
 ):
     
-    start_str, end_str = os.path.basename(movie_pool_dir).split("_")
-    data_file = os.path.join(movie_pool_dir, f"{lang}.json")
-    with open(data_file, 'r', encoding='utf-8') as f:
+    start_str, end_str = Path(movie_pool_file).stem.split("_")
+
+    with open(movie_pool_file, 'r', encoding='utf-8') as f:
         movie_pool = json.load(f)
     yt = YouTubeClient()
-    llm = OpenAIModel_parallel('gpt-4o-mini', temperature=0.8, max_tokens=9999)
+    llm = OpenAIModel('gpt-4o-mini', temperature=0.8, max_tokens=9999)
 
     selected_snippets = []
     for movie_snippet in tqdm(movie_pool):
         snippet = single_movie_retrieval(
-            yt, llm, lang, 
+            yt, llm, 
             start_str, end_str, 
             movie_snippet, min_comments, 
         )
@@ -147,24 +130,23 @@ def main(
             print("[END] Reached maximum snippet count.")
             break
 
-    save_dir = os.path.join(output_dir, f"{start_str}_{end_str}")
-    os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, f"{lang}.json")
-    with open(save_path, 'w', encoding='utf-8') as f:
+
+    os.makedirs(Path(output_file).parent, exist_ok=True)
+    with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(selected_snippets, f, indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download Movie comments")
     parser.add_argument(
-        "--entity_pool",
+        "--entity_pool_file",
         type=str,
-        default="data-v2/movie/movie_pool/2025-07-01_2025-09-30",
+        default="data/movie/movie_pool/2025-07-01_2025-09-30.json",
     )
     parser.add_argument(
-        "--output_dir",
+        "--output_file",
         type=str,
-        default="data-v2/movie/opinion_entity",
+        default="data/movie/opinion_entity/2025-07-01_2025-09-30.json",
     )
     parser.add_argument(
         "--min_comments",
@@ -177,18 +159,11 @@ if __name__ == "__main__":
         type=int,
         default=20,
     )
-    parser.add_argument(
-        "--comment_lang",
-        type=str,
-        default="en",
-        help="Language code for movie trailers."
-    )
 
     args = parser.parse_args()
     main(
-        movie_pool_dir=args.entity_pool,
-        output_dir=args.output_dir,
+        movie_pool_file=args.entity_pool_file,
+        output_file=args.output_file,
         min_comments=args.min_comments,
         max_snippets=args.max_entity,
-        lang=args.comment_lang,
     )

@@ -3,22 +3,9 @@ import json
 import re
 import argparse
 from typing import List, Dict, Any
-import numpy as np
+from io_utils import load_jsonl, save_jsonl
+from eval_utils import top1_mass, top1_minus_top2_mass, js_between_uniform
 
-def load_jsonl(path: str) -> List[Dict[str, Any]]:
-    """Load a JSONL file as a list of dictionaries."""
-    data = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            data.append(json.loads(line))
-    return data
-
-
-def save_jsonl(data: List[Dict[str, Any]], path: str) -> None:
-    """Save list of dicts to a JSONL file."""
-    with open(path, "w", encoding="utf-8") as f:
-        for item in data:
-            f.write(json.dumps(item, ensure_ascii=False) + "\n")
 
 
 def extract_json_from_text(text: str) -> str | None:
@@ -53,16 +40,6 @@ def extract_json_from_text(text: str) -> str | None:
     return None
 
 
-def top1_mass(probs):
-    p = np.asarray(probs, dtype=np.float64)
-    return np.max(p)
-
-def top1_minus_top2_mass(probs):
-    p = np.asarray(probs, dtype=np.float64)
-    p_sorted = np.sort(p)[::-1]
-    if len(p_sorted) < 2:
-        return np.nan
-    return p_sorted[0] - p_sorted[1]
 
 def _get_pred(text: str) -> Dict[str, Any]:
     """
@@ -87,90 +64,6 @@ def _get_pred(text: str) -> Dict[str, Any]:
         pred_json = {}
 
     return pred_json
-
-
-def normalized_entropy(probs, eps=1e-12):
-    p = np.asarray(probs, dtype=np.float64)
-    total = p.sum()
-
-    # empty or invalid distribution
-    if total <= 0:
-        return np.nan
-
-    p = p / total
-    p = np.clip(p, eps, 1.0)
-
-    K = len(p)
-    entropy = -np.sum(p * np.log(p))
-    return entropy / np.log(K)
-
-
-def majority_support_size(probs, threshold=0.5):
-    p = np.asarray(probs, dtype=np.float64)
-    total = p.sum()
-
-    if total <= 0:
-        return np.nan
-
-    p = p / total
-    p_sorted = np.sort(p)[::-1]
-    cumulative = np.cumsum(p_sorted)
-
-    return int(np.searchsorted(cumulative, threshold) + 1)
-
-
-def normalized_majority_support_size(probs, threshold=0.5):
-    K = len(probs)
-    size = majority_support_size(probs, threshold)
-    if np.isnan(size):
-        return np.nan
-    return size / K
-
-
-
-def js_between_uniform(probs, eps=1e-12, log_base=np.e):
-    """
-    Jensen–Shannon divergence between a categorical distribution and uniform.
-
-    Args:
-        probs: iterable of non-negative numbers
-        eps: small constant for numerical stability
-        log_base: np.e (nats) or 2 (bits)
-
-    Returns:
-        JSD(P || Uniform)
-    """
-    p = np.asarray(probs, dtype=np.float64)
-    total = p.sum()
-
-    if total <= 0:
-        return np.nan
-
-    # normalize
-    p = p / total
-    K = len(p)
-    u = np.full(K, 1.0 / K)
-
-    # mixture
-    m = 0.5 * (p + u)
-
-    # avoid log(0)
-    p = np.clip(p, eps, 1.0)
-    m = np.clip(m, eps, 1.0)
-
-    # KL(P || M)
-    kl_pm = np.sum(p * np.log(p / m))
-
-    # KL(U || M)
-    kl_um = np.sum(u * np.log(u / m))
-
-    js = 0.5 * (kl_pm + kl_um)
-
-    # change log base if needed
-    if log_base != np.e:
-        js /= np.log(log_base)
-
-    return js
 
 
 
@@ -204,11 +97,10 @@ def QA_eval(item: Dict[str, Any], task: str) -> Dict[str, Any]:
         "pred": pred_json, 
         "correctness": is_correct,
         "random_correctness": (len(gt) / len(ref_dist)),
-        "normalized_entropy": normalized_entropy(list(ref_dist.values())),
-        "normalized_majority_support_size": normalized_majority_support_size(list(ref_dist.values())),
         "top1_mass": top1_mass(list(ref_dist.values())),
         "top1_minus_top2_mass": top1_minus_top2_mass(list(ref_dist.values())),
         "js_between_uniform": js_between_uniform(list(ref_dist.values())),
+        "support_size": int(len(list(ref_dist.values()))),
         **item
     }
     return new
@@ -250,8 +142,7 @@ if __name__ == "__main__":
         "--domain",
         type=str,
         choices=["movie", "music"],
-        required=True,
-        help="Domain.",
+        help="Domain",
     )
 
     args = parser.parse_args()

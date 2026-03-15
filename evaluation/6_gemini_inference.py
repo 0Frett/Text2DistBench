@@ -3,16 +3,7 @@ import json
 import argparse
 from tqdm import tqdm
 from google_client import GeminiModel
-
-
-
-def load_jsonl(path):
-    """Load a JSONL file as a list of dictionaries."""
-    data = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            data.append(json.loads(line))
-    return data
+from io_utils import load_jsonl, save_jsonl
 
 
 
@@ -42,14 +33,6 @@ def run_inference(model, input_data):
 
 
 
-def save_jsonl(data, path):
-    """Save list of dicts to a JSONL file."""
-    with open(path, "w", encoding="utf-8") as f:
-        for item in data:
-            f.write(json.dumps(item, ensure_ascii=False) + "\n")
-
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -70,7 +53,7 @@ def main():
         help="Directory to save generated responses."
     )
     parser.add_argument(
-        "--temperature", type=float, default=0.5
+        "--temperature", type=float, default=0.0
     )
     args = parser.parse_args()
 
@@ -82,9 +65,7 @@ def main():
     
     print(f"[INFO] Run OpBench on Model: {args.model_id}")
 
-    model = GeminiModel(
-        model=args.model_id, 
-        temperature=args.temperature)
+    model = GeminiModel(model=args.model_id)
 
     input_data = load_jsonl(args.test_fp)
     outputs = run_inference(model, input_data)    

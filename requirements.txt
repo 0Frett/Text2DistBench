@@ -1,6 +1,4 @@
 torch
-torchvision
-torchaudio
 transformers
 peft
 datasets
@@ -10,12 +8,11 @@ wandb
 requests
 google-api-python-client
 IMDbPY
-ipdb
 tqdm
 python-dotenv
 langdetect
 scipy
-vllm==0.10.1.1
+vllm
 google-genai
 xai-sdk
 openai-harmony

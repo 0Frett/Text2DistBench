@@ -140,7 +140,7 @@ def main():
     ap = argparse.ArgumentParser(description="Hierarchical stratified downsampling (target -> stance).")
     ap.add_argument("--input_dir", required=True)
     ap.add_argument("--output_dir", required=True)
-    ap.add_argument("--total", required=True, type=int, help="下采樣後總評論數")
+    ap.add_argument("--total_comments", required=True, type=int)
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
@@ -154,7 +154,7 @@ def main():
         blocks = load_blocks(input_file)
         tgt2stance2comments = hierarchy_map(blocks)
 
-        sampled_hier = hierarchical_sample(tgt2stance2comments, total_out=args.total, seed=args.seed)
+        sampled_hier = hierarchical_sample(tgt2stance2comments, total_out=args.total_comments, seed=args.seed)
         out_blocks = to_blocks(sampled_hier)
 
         with open(output_file, "w", encoding="utf-8") as f:
@@ -162,7 +162,7 @@ def main():
 
         orig_total = sum(len(c) for t in tgt2stance2comments.values() for c in t.values())
         new_total  = sum(len(c) for t in sampled_hier.values()        for c in t.values())
-        print(f"Input total: {orig_total} -> Output total: {new_total} (target={args.total})")
+        print(f"Input total: {orig_total} -> Output total: {new_total} (target={args.total_comments})")
 
         def show_dist(title, mapping):
             print(f"\n{title}")

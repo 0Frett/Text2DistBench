@@ -3,15 +3,13 @@ import os
 import re
 import argparse
 from tqdm import tqdm
-from typing import List, Dict, Any
+from typing import Dict, Any
 from movie_client import MovieClient
-from constant import LANG_ISO_CODE 
 
 
 def main(
     start_date: str, 
     end_date: str, 
-    language: str,
     output_dir: str,
     max_movies: int
 ) -> Dict[str, Any]:
@@ -19,12 +17,12 @@ def main(
     print(f"Initializing MovieClient...")
     client = MovieClient()
 
-    print(f"\nFetching movies with theatrical (wide) release in: {LANG_ISO_CODE[language]}")
+    print(f"\nFetching movies with theatrical (wide) release in: US")
     print(f"Time range: {start_date} to {end_date}\n")
 
     movies = client.get_movies(
         time_range=(start_date, end_date),
-        ISOs=[LANG_ISO_CODE[language]],
+        ISOs=["US"],
         max_movies=max_movies,
     )
     print(movies)
@@ -32,11 +30,11 @@ def main(
 
     movie_info = []
     cnt = 0
-    # movies = ["Him", "Superman"] + movies
+
     for movie_title in tqdm(movies, desc="Downloading movie details"):
         try:
             info = client.get_movie_info(movie_title)
-            print(info)
+            # print(info)
             # Required fields check
             # if not info.get("title"):
             #     print(f"Skipping '{movie_title}': missing Title")
@@ -51,8 +49,8 @@ def main(
                 print(f"Skipping '{movie_title}': missing Release_Dates")
                 continue
 
-            info["release_dates"] = info.get("release_dates").get(LANG_ISO_CODE[language])
-            info["aka"] = info.get("aka").get(LANG_ISO_CODE[language])
+            info["release_dates"] = info.get("release_dates").get("US")
+            info["aka"] = info.get("aka").get("US")
             info['title'] = re.sub(r"[^\w\-_. ]", "_", movie_title)
 
             movie_info.append(info)
@@ -64,10 +62,8 @@ def main(
         except Exception as e:
             print(f"Error processing '{movie_title}': {e}")
 
-    save_dir = os.path.join(output_dir, f"{start_date}_{end_date}")
-    os.makedirs(save_dir, exist_ok=True)
-
-    save_path = os.path.join(save_dir, f"{language}.json")
+    os.makedirs(output_dir, exist_ok=True)
+    save_path = os.path.join(output_dir, f"{start_date}_{end_date}.json")
 
     with open(save_path, 'w', encoding='utf-8') as f:
         json.dump(movie_info, f, indent=2, ensure_ascii=False)
@@ -91,12 +87,6 @@ if __name__ == "__main__":
         help="End date for movie collection in YYYY-MM-DD format."
     )
     parser.add_argument(
-        "--lang",
-        type=str,
-        default="en",
-        choices=["en", "zh", "ja", "fr", "es"],
-    )
-    parser.add_argument(
         "--output_dir",
         type=str,
         default="data/movie/movie_pool",
@@ -113,7 +103,6 @@ if __name__ == "__main__":
     main(
         start_date=args.start_str, 
         end_date=args.end_str,
-        language=args.lang,
         output_dir=args.output_dir,
         max_movies=args.max_entity
     )

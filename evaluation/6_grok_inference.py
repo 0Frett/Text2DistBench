@@ -3,20 +3,11 @@ import json
 import argparse
 from tqdm import tqdm
 from grok_client import GrokModel
+from io_utils import load_jsonl, save_jsonl
 
 
 
-def load_jsonl(path):
-    """Load a JSONL file as a list of dictionaries."""
-    data = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            data.append(json.loads(line))
-    return data
-
-
-
-def run_inference(model, input_data, nseq):
+def run_inference(model, input_data):
     """Run inference on a single model checkpoint."""
 
     results = []
@@ -40,13 +31,6 @@ def run_inference(model, input_data, nseq):
     return results
 
 
-def save_jsonl(data, path):
-    """Save list of dicts to a JSONL file."""
-    with open(path, "w", encoding="utf-8") as f:
-        for item in data:
-            f.write(json.dumps(item, ensure_ascii=False) + "\n")
-
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -67,9 +51,6 @@ def main():
         default="inference_output/movie/2025-07-01_2025-09-30/en/sampled_50/stance_dist/gemma-3-27b-it.jsonl",
         help="Directory to save generated responses."
     )
-    parser.add_argument(
-        "--n", type=int, default=32
-    )
     args = parser.parse_args()
 
     os.makedirs(os.path.dirname(args.output_fp), exist_ok=True)
@@ -82,7 +63,7 @@ def main():
     model = GrokModel(model=args.model_id)
 
     input_data = load_jsonl(args.test_fp)
-    outputs = run_inference(model, input_data, nseq=args.n)    
+    outputs = run_inference(model, input_data)    
     save_jsonl(outputs, args.output_fp)
     print(f"[✓] Saved Output: {args.output_fp}")
 

@@ -5,11 +5,10 @@ import re
 from typing import Any, Dict, List, Tuple
 from collections import Counter
 from collections import defaultdict
-from openai_client import OpenAIModel_parallel
+from openai_client import OpenAIModel
 from google_client import GeminiModel
 from grok_client import GrokModel
 from prompts import movie_datagen_prompts, music_datagen_prompts
-
 
 
 # STANCE_KEYS = ["support","neutral","oppose"]
@@ -51,48 +50,13 @@ def _call_models_once(models: Dict[str, Any], prompt: str) -> Dict[str, Any]:
             out[name] = None
     return out
 
-def _single_topic_from_one_model(assign_json: Dict[str, List[int]], local_idx: int, attrs_topic: List[str]) -> str:
-    if not isinstance(assign_json, dict): 
-        return ''
-    hits = [a for a in attrs_topic if local_idx in (assign_json.get(a) or [])]
-    return hits[0] if len(hits) == 1 else ''
-
-def _unanimous_topic(per_model_json: Dict[str, Dict[str, List[int]]], local_idx: int, attrs_topic: List[str]) -> str:
-    labels = []
-    for _, js in per_model_json.items():
-        lab = _single_topic_from_one_model(js, local_idx, attrs_topic)
-        if not lab or lab == "Other":
-            return ''
-        labels.append(lab)
-    return labels[0] if all(l == labels[0] for l in labels) else ''
-
-def _stance_from_one_model(stance_json: Dict[str, List[int]], local_idx: int) -> str:
-    if not isinstance(stance_json, dict): 
-        return ''
-    hits = [k for k in STANCE_KEYS if local_idx in (stance_json.get(k) or [])]
-    return hits[0] if len(hits) == 1 else ''
-
-def _unanimous_stance(per_model_json: Dict[str, Dict[str, List[int]]], local_idx: int) -> str:
-    labels = []
-    for _, js in per_model_json.items():
-        lab = _stance_from_one_model(js, local_idx)
-        if not lab:
-            return ''
-        labels.append(lab)
-    return labels[0] if all(l == labels[0] for l in labels) else ''
-
-
 
 def _majority_single_topic(per_model_json: Dict[str, Dict[str, List[int]]],
                            local_idx: int,
                            attrs_topic: List[str],
                            allow_other: bool = False,
                            k: int = 2) -> str:
-    """
-    回傳 '2/3 多數一致' 的單一主題；若不足 k 或發生明確衝突則回 ''。
-    規則：統計每個模型對 local_idx 的「唯一命中主題」；None/多標視為 'invalid'。
-    只要有某主題 label 次數 >= k，且其他明確不同主題的次數 <= (num_models - k)，即可接受。
-    """
+
     votes = []
     for _, js in per_model_json.items():
         if not isinstance(js, dict):
@@ -117,7 +81,7 @@ def _majority_stance(per_model_json: Dict[str, Dict[str, List[int]]],
                      local_idx: int,
                      k: int = 2) -> str:
 
-    candidates = ["support","neutral","oppose"]
+    candidates = ["support","oppose"]
     votes = []
     for _, js in per_model_json.items():
         if not isinstance(js, dict):
@@ -161,9 +125,6 @@ def process(train_docs, models, PROMPT_TEMPLATE, batch_size=100):
                 print(f"  ↳ {name} returned invalid JSON.")
 
         for li in l2g.keys():
-            # unanimous = _unanimous_topic(topic_jsons, li, attrs_topic)
-            # if unanimous and unanimous in kept_by_target_global:
-            #     kept_by_target_global[unanimous].append(l2g[li])
             majority = _majority_single_topic(topic_jsons, li, attrs_topic, allow_other=False, k=2)
             if majority and majority in kept_by_target_global:
                 kept_by_target_global[majority].append(l2g[li])
@@ -203,7 +164,6 @@ def process(train_docs, models, PROMPT_TEMPLATE, batch_size=100):
 
             by_stance_locals = {k: [] for k in STANCE_KEYS}
             for li in l2g_chunk.keys():
-                # us = _unanimous_stance(stance_jsons, li)
                 us = _majority_stance(stance_jsons, li, k=2)
                 if us in STANCE_KEYS:
                     by_stance_locals[us].append(li)
@@ -233,51 +193,9 @@ def process(train_docs, models, PROMPT_TEMPLATE, batch_size=100):
 
 
 
-def process_stage2_only(train_docs, models, PROMPT_TEMPLATE, batch_size=100):
-    meta = train_docs["meta_data"]
-    comments = train_docs["comments"]
-    STANCE_TMPL = PROMPT_TEMPLATE.STANCE_CLF_TEMPLATE
-
-    results: List[Dict[str, Any]] = []
-    overall_groups = {k: [] for k in STANCE_KEYS}
-
-    print("\n[ONE-STAGE] Overall stance classification (no topics)...")
-
-    for start in range(0, len(comments), batch_size):
-        batch = comments[start:start + batch_size]
-        stance_block, l2g = _block_with_local_indices(batch, start_global=start)
-
-        stance_prompt = STANCE_TMPL.format(meta_data=meta, comments=stance_block)
-        stance_jsons = _call_models_once(models, stance_prompt)
-
-        for name, js in stance_jsons.items():
-            if isinstance(js, dict):
-                summary = {k: len(v) if isinstance(v, list) else 0 for k, v in js.items()}
-                print(f"  ↳ {name} stance summary: {summary}")
-            else:
-                print(f"  ↳ {name} returned invalid JSON.")
-
-        for li in range(len(batch)):
-            # label = _unanimous_stance(stance_jsons, li)
-            label = _majority_stance(stance_jsons, li, k=2)
-            if label in STANCE_KEYS:
-                overall_groups[label].append(comments[l2g[li]])
-
-    for stance_label in STANCE_KEYS:
-        if overall_groups[stance_label]:
-            results.append({
-                "target": "overall",
-                "stance": stance_label,
-                "comments": overall_groups[stance_label]
-            })
-            print(f"  ✅ overall / {stance_label}: {len(overall_groups[stance_label])} unanimous comments")
-
-    print(f"\n[ONE-STAGE DONE] Total opinion units formed: {len(results)}\n")
-    return results
-
 # ---------- main ----------
 
-def main(training_docs_dir, output_dir, domain, comment_lang, stages):
+def main(source_docs_dir, output_dir, domain):
     # Load domain-specific prompts
     if domain == "movie":
         PROMPT_TEMPLATE = movie_datagen_prompts
@@ -287,18 +205,18 @@ def main(training_docs_dir, output_dir, domain, comment_lang, stages):
         raise ValueError("domain must be 'movie' or 'music'")
 
     models = {
-        'gpt':    OpenAIModel_parallel('gpt-4o-mini', temperature=0.5, max_tokens=10000),
+        'gpt':    OpenAIModel('gpt-4o-mini', temperature=0.5, max_tokens=10000),
         'gemini': GeminiModel(model="gemini-2.5-flash-lite"),
         'grok':   GrokModel(model="grok-4-fast-non-reasoning")
     }
 
-    time_stamp = os.path.basename(training_docs_dir)
-    save_dir = os.path.join(output_dir, f"{time_stamp}", comment_lang, stages)
+    time_stamp = os.path.basename(source_docs_dir)
+    save_dir = os.path.join(output_dir, time_stamp)
     os.makedirs(save_dir, exist_ok=True)
 
-    lang_docs_dir = os.path.join(training_docs_dir, comment_lang)
-    for doc_fn in os.listdir(lang_docs_dir):
-        with open(os.path.join(lang_docs_dir, doc_fn), "r", encoding="utf-8") as f:
+
+    for doc_fn in os.listdir(source_docs_dir):
+        with open(os.path.join(source_docs_dir, doc_fn), "r", encoding="utf-8") as f:
             train_docs = json.load(f)
 
         output_path = os.path.join(save_dir, doc_fn)
@@ -308,12 +226,7 @@ def main(training_docs_dir, output_dir, domain, comment_lang, stages):
             continue
         print(f"\nProcessing: {output_path}")
 
-        if stages == "target":
-            video_opinions = process(train_docs, models, PROMPT_TEMPLATE)
-        elif stages == "overall":
-            video_opinions = process_stage2_only(train_docs, models, PROMPT_TEMPLATE)
-        else:
-            raise ValueError("stages must be 'overall' or 'target'")
+        video_opinions = process(train_docs, models, PROMPT_TEMPLATE)
 
         with open(output_path, "w", encoding="utf-8") as out_f:
             json.dump(video_opinions, out_f, ensure_ascii=False, indent=2)
@@ -324,15 +237,10 @@ if __name__ == "__main__":
     parser.add_argument("--domain", type=str, default="movie", choices=["movie", "music"])
     parser.add_argument("--source_docs_dir", type=str, default="data/movie/source_docs/2025-07-01_2025-09-30")
     parser.add_argument("--output_dir", type=str, default="data/movie/opinion_units")
-    parser.add_argument("--comment_lang", type=str, default="en")
-    parser.add_argument("--stages", type=str, default="target", choices=["overall", "target"],
-                        help="overall=stance-only; target=topic+stance")
     args = parser.parse_args()
 
     main(
-        args.source_docs_dir,
-        args.output_dir,
-        args.domain,
-        args.comment_lang,
-        args.stages
+        source_docs_dir=args.source_docs_dir,
+        output_dir=args.output_dir,
+        domain=args.domain
     )

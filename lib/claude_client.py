@@ -6,13 +6,10 @@ import os, time, itertools
 from typing import List, Dict, Union, Iterable, Optional, Tuple
 import anthropic
 from dotenv import load_dotenv
-import ipdb
 load_dotenv()
 
-MODEL_DEFAULT = "claude-3-5-haiku-20241022"  # 或 "claude-haiku-4-5-20251001"
 
-
-class GenerateOutput:
+class ClaudeGenerateOutput:
     def __init__(self, text: List[str], raw: Optional[Dict]=None, usage: Optional[List[Dict]]=None):
         # text: 對應該樣本的 N 個候選（batch 以重複請求實現）
         self.text = text
@@ -25,7 +22,7 @@ class GenerateOutput:
 class ClaudeBatchModel:
     def __init__(
         self,
-        model: str = MODEL_DEFAULT,
+        model: str,
         temperature: float = 1.0,
         max_tokens: int = 10000,
         poll_sec: int = 10,
@@ -44,10 +41,10 @@ class ClaudeBatchModel:
         self,
         prompt: Union[str, List[str]],
         num_return_sequences: int = 1,
-    ) -> Union[GenerateOutput, List[GenerateOutput]]:
+    ) -> Union[ClaudeGenerateOutput, List[ClaudeGenerateOutput]]:
         """
-        - prompt: str -> 回傳單一 GenerateOutput（包含 num_return_sequences 個候選）
-        - prompt: List[str] -> 回傳 List[GenerateOutput]（順序與輸入對齊）
+        - prompt: str -> 回傳單一 ClaudeGenerateOutput（包含 num_return_sequences 個候選）
+        - prompt: List[str] -> 回傳 List[ClaudeGenerateOutput]（順序與輸入對齊）
         """
         if isinstance(prompt, str):
             prompts = [prompt]
@@ -83,7 +80,7 @@ class ClaudeBatchModel:
         cid2text, cid2raw, cid2usage = self._collect_results(batch_id)
 
         # 4) 組裝回傳：對每個樣本，依 n=0..per_item-1 的 custom_id 順序取回
-        outputs: List[GenerateOutput] = []
+        outputs: List[ClaudeGenerateOutput] = []
         for i in range(len(prompts)):
             texts = []
             raw_map = {}
@@ -93,7 +90,7 @@ class ClaudeBatchModel:
                 texts.append(cid2text.get(cid, ""))  # 若失敗則給空字串
                 raw_map[cid] = cid2raw.get(cid)
                 usage_list.append(cid2usage.get(cid))
-            outputs.append(GenerateOutput(text=texts, raw=raw_map, usage=usage_list))
+            outputs.append(ClaudeGenerateOutput(text=texts, raw=raw_map, usage=usage_list))
 
         return outputs[0] if single else outputs
         
@@ -176,35 +173,3 @@ class ClaudeBatchModel:
 
         return cid2text, cid2raw, cid2usage
 
-
-# ------------- minimal usage -------------
-if __name__ == "__main__":
-    import json
-    fp = "data/movie/benchmark/2025-07-01_2025-09-30/en/sampled_250/stance_dist.jsonl"
-    data = []
-    with open(fp, "r", encoding="utf-8") as f:
-        for line in f:
-            data.append(json.loads(line))
-    qs = []
-    for i in range(10):
-        qs.append(data[i]["question"])
-    
-
-    m = ClaudeBatchModel(
-        model=MODEL_DEFAULT,
-        temperature=0.0,
-        max_tokens=512,
-        poll_sec=10,
-    )
-
-    # 1) 單一樣本、取 2 個候選
-    # out = m.generate("Say this is a test.", num_return_sequences=2)
-    # print("[single] n=", out.n, " -> ", out.text)
-
-    # 2) 多樣本、每個取 1 個候選
-    outs = m.generate(
-        qs,
-        num_return_sequences=1,
-    )
-    for i, r in enumerate(outs, 1):
-        print(f"[{i}] n={r.n} -> {r.text[0]}")

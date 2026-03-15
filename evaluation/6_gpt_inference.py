@@ -3,16 +3,7 @@ import json
 import argparse
 from tqdm import tqdm
 from openai_client import OpenAIModel, OpenAIReasoningModel
-
-
-
-def load_jsonl(path):
-    """Load a JSONL file as a list of dictionaries."""
-    data = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            data.append(json.loads(line))
-    return data
+from io_utils import load_jsonl, save_jsonl
 
 
 
@@ -60,14 +51,6 @@ def run_inference(model, input_data):
         print(f"GT: {item['answer']}", flush=True)
         print(f"Pred: {gen.output_text}", flush=True)
     return results
-
-
-
-def save_jsonl(data, path):
-    """Save list of dicts to a JSONL file."""
-    with open(path, "w", encoding="utf-8") as f:
-        for item in data:
-            f.write(json.dumps(item, ensure_ascii=False) + "\n")
 
 
 

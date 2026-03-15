@@ -4,20 +4,9 @@ import json
 import argparse
 from tqdm import tqdm
 from claude_client import ClaudeBatchModel
+from io_utils import load_jsonl, save_jsonl
 
 
-def load_jsonl(path):
-    data = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            data.append(json.loads(line))
-    return data
-
-def save_jsonl(data, path):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        for item in data:
-            f.write(json.dumps(item, ensure_ascii=False) + "\n")
 
 def run_inference_batch(
     model: ClaudeBatchModel,
@@ -60,16 +49,10 @@ def run_inference_batch(
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_id", type=str, default="claude-3-5-haiku-20241022")
-    parser.add_argument("--test_fp", type=str,
-                        default="data/movie/benchmark/2025-07-01_2025-09-30/en/sampled_50/stance_dist.jsonl",
-                        help="Path to JSONL file with validation prompts.")
-    parser.add_argument("--output_fp", type=str,
-                        default="inference_output/movie/2025-07-01_2025-09-30/en/sampled_50/stance_dist/claude-haiku.jsonl",
-                        help="Path to save generated responses.")
-    parser.add_argument("--batch_size", type=int, default=5000,
-                        help="Number of prompts per Message Batch create() call.")
-    parser.add_argument("--num_return_sequences", type=int, default=1,
-                        help="Per prompt, number of variants (duplicates requests in a batch).")
+    parser.add_argument("--test_fp", type=str, help="Path to JSONL file with validation prompts.")
+    parser.add_argument("--output_fp", type=str, help="Path to save generated responses.")
+    parser.add_argument("--batch_size", type=int, default=5000, help="Number of prompts per Message Batch create() call.")
+    parser.add_argument("--n", type=int, default=1, help="Per prompt, number of variants (duplicates requests in a batch).")
     args = parser.parse_args()
 
     os.makedirs(os.path.dirname(args.output_fp), exist_ok=True)
@@ -89,7 +72,7 @@ def main():
         model=model,
         input_data=input_data,
         batch_size=args.batch_size,
-        num_return_sequences=args.num_return_sequences,
+        num_return_sequences=args.n,
     )
     save_jsonl(outputs, args.output_fp)
     print(f"[✓] Saved Output: {args.output_fp}")
