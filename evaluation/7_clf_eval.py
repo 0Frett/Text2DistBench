@@ -96,12 +96,11 @@ def QA_eval(item: Dict[str, Any], task: str) -> Dict[str, Any]:
     new = {
         "pred": pred_json, 
         "correctness": is_correct,
-        "random_correctness": (len(gt) / len(ref_dist)),
+        # "random_correctness": (len(gt) / len(ref_dist)),
         "top1_mass": top1_mass(list(ref_dist.values())),
         "top1_minus_top2_mass": top1_minus_top2_mass(list(ref_dist.values())),
         "js_between_uniform": js_between_uniform(list(ref_dist.values())),
         "support_size": int(len(list(ref_dist.values()))),
-        **item
     }
     return new
 

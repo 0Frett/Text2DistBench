@@ -8,7 +8,7 @@ models=(
     "gemini-2.5-pro"
     "grok-4-fast-reasoning"
     "claude-sonnet-4-5"
-    "Qwen/Qwen2.5-1.5B-Instruct"
+    # "Qwen/Qwen2.5-1.5B-Instruct"
 )
 domains=("movie")
 task_types=("P_s")

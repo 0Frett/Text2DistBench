@@ -254,10 +254,6 @@ def QA_eval(item, task, domain):
     gt_dist = {k: float(v)/100 for k, v in gt_dist.items()}
 
     all_keys = gt_dist.keys()
-
-    # MAE + uniform MAE
-    mae = 0
-    mae_uniform = 0
     
     # --- NEW: TVD ---
     tvd = 0
@@ -269,41 +265,28 @@ def QA_eval(item, task, domain):
 
         upv = 1 / len(all_keys)
 
-        mae += abs(pv - gv)
-        mae_uniform += abs(upv - gv)
-
         # TVD terms
         tvd += abs(pv - gv)
         tvd_uniform += abs(upv - gv)
 
-    # normalize
-    mae /= len(all_keys)
-    mae_uniform /= len(all_keys)
 
     tvd /= 2
     tvd_uniform /= 2
 
-    # write back
-    item["extract_pred"] = pred_dist
-    item["extract_answer"] = gt_dist
-    item["mae"] = mae
-    item["uniform_mae"] = mae_uniform
 
     ref_dist = item['answer']
+    print(f"GT: {gt_dist} | Pred: {pred_dist} | 1-TVD: {1-tvd}")
 
     # --- NEW fields ---
-    item["tvd"] = tvd
-    item["uniform_tvd"] = tvd_uniform
     new = {
         "pred_dist": pred_dist, 
         "gt_dist": gt_dist,
-        "tvd": tvd,
-        "uniform_tvd": tvd_uniform,
+        "1-tvd": 1-tvd,
+        # "uniform_tvd": tvd_uniform,
         "top1_mass": top1_mass(list(ref_dist.values())),
         "top1_minus_top2_mass": top1_minus_top2_mass(list(ref_dist.values())),
         "js_between_uniform": js_between_uniform(list(ref_dist.values())),
         "support_size": int(len(list(ref_dist.values()))),
-        **item
     }
 
     return new
