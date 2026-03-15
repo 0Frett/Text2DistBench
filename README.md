@@ -56,7 +56,7 @@ Each instance corresponds to a distributional reading comprehension question.
   "qid": < question id >,
   "qtype": < distribution type >,
   "answer": < answer (mode label or distribution depending on task) >,
-  "ref_dist(if 7_clf_eval.py)": < Ground-truth distribution over labels >,
+  "ref_dist": < Ground-truth distribution over labels >,
   "question": < Full prompt shown to model (instruction + evidence + query) >,
   "source": "< entity name >"
 }
@@ -95,10 +95,10 @@ bash scripts/4_evaluation.sh
 The evaluation scripts expect JSONL input, where each line corresponds to one benchmark instance with the following Minimal required format:
 ```
 {
-  "qid": "<question id>",
-  "answer": "<ground truth answer>",
-  "ref_dist": "<ground truth distribution (required for classification evaluation)>",
-  "response": "<raw model response text>"
+  "qid": "< question id >",
+  "answer": "< ground truth answer >",
+  "ref_dist": "< ground truth distribution >",
+  "response": "< raw model response text >"
 }
 ```
 The evaluation scripts output a JSONL file containing instances of:
