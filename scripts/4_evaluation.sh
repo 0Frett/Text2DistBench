@@ -14,7 +14,7 @@ domains=("movie")
 task_types=("P_s")
 sample_sizes=(50)
 qa_types=("estimation")
-ps=("posterior")
+ps=("posterior" "prior")
 
 DATE_RANGE="2025-12-01_2026-03-01"
 
@@ -29,6 +29,11 @@ for model in "${models[@]}"; do
             out_fp="eval/${domain}/${p}/${qa_type}/${DATE_RANGE}/sampled_${size}/${task}/${model}.jsonl"
             pred_fp="output/${domain}/${p}/${qa_type}/${DATE_RANGE}/sampled_${size}/${task}/${model}.jsonl"
 
+            if [[ "$p" == "prior" ]]; then
+              out_fp="eval/${domain}/${p}/${qa_type}/${DATE_RANGE}/${task}/${model}.jsonl"
+              pred_fp="output/${domain}/${p}/${qa_type}/${DATE_RANGE}/${task}/${model}.jsonl"
+            fi
+
             if [[ "$qa_type" == "estimation" ]]; then
               PYTHONPATH=lib python3 evaluation/7_est_eval.py \
                 --task "$task" \
@@ -42,6 +47,11 @@ for model in "${models[@]}"; do
                 --output_fp "$out_fp" \
                 --pred_fp "$pred_fp" \
                 --domain "$domain"
+                
+            else
+              echo "Unknown qa_type: $qa_type"
+              exit 1
+
             fi
           done
         done

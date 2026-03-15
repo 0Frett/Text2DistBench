@@ -1,7 +1,7 @@
 
 set -euo pipefail
 
-DOMAIN="movie"
+DOMAIN="music"
 DATE_RANGE="2025-12-01_2026-03-01"
 SAMPLE_TAG="sampled_50"
 
@@ -39,7 +39,7 @@ for entry in "${SCRIPTS[@]}"; do
             --domain "${DOMAIN}" \
             --op_units_dir "${OP_UNITS_DIR}" \
             --source_docs_dir "${SOURCE_DOCS_DIR}" \
-            --output_dir "data/${DOMAIN}/benchmark/prior/${task_name}/${DATE_RANGE}/${SAMPLE_TAG}" \
+            --output_dir "data/${DOMAIN}/benchmark/prior/${task_name}/${DATE_RANGE}" \
             --qa_type "${qa_type}" \
             --prior
     done

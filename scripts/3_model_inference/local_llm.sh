@@ -12,7 +12,7 @@ domains=('movie')
 task_types=("P_s")
 qa_types=("estimation" "most_freq")
 sample_sizes=(50)
-ps=("posterior" "prior")
+ps=("posterior")
 date="2025-12-01_2026-03-01"
 
 for domain in "${domains[@]}"; do

@@ -32,6 +32,6 @@ PYTHONPATH=lib python3 data_generation/2_annotate_comments.py \
 ### Step 4. Stratified sampling comments (Optional):
 PYTHONPATH=lib python3 data_generation/3_stratify_sample.py \
   --input_dir data/${domain}/opinion_units/2025-12-01_2026-03-01 \
-  --output_dir data/${domain}/opinion_units/2025-12-01_2026-03-01/sampled_50 \
-  --total_comments 50 \
+  --output_dir data/${domain}/opinion_units/2025-12-01_2026-03-01/sampled_100 \
+  --total_comments 100 \
   --seed 204
