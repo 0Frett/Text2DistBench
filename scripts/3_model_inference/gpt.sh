@@ -19,8 +19,8 @@ for qa_type in "${qa_types[@]}"; do
     out_dir="output/${domain}/${p}/${qa_type}/${date}/sampled_${size}/${task}"
 
     if [[ "$p" == "prior" ]]; then
-    test_fp="data/${domain}/benchmark/${p}/${qa_type}/${date}/${task}.jsonl"
-    out_dir="output/${domain}/${p}/${qa_type}/${date}/${task}"
+        test_fp="data/${domain}/benchmark/${p}/${qa_type}/${date}/${task}.jsonl"
+        out_dir="output/${domain}/${p}/${qa_type}/${date}/${task}"
     fi
 
     echo "Running: gpt-4.1 | $domain | $qa_type | $p | $task | $size"

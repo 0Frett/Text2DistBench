@@ -23,11 +23,18 @@ for p in "${ps[@]}"; do
 for qa_type in "${qa_types[@]}"; do
     echo "Running: $model | $domain | $qa_type | $p | $task | $size"
 
+    test_fp="data/${domain}/benchmark/${p}/${qa_type}/${date}/sampled_${size}/${task}.jsonl"
+    out_fp="output/${domain}/${p}/${qa_type}/${date}/sampled_${size}/${task}/${model}.jsonl"
+
+    if [[ "$p" == "prior" ]]; then
+        out_fp="output/${domain}/${p}/${qa_type}/${date}/${task}/${model}.jsonl"
+        test_fp="data/${domain}/benchmark/${p}/${qa_type}/${date}/${task}.jsonl"
+    fi
 
     PYTHONPATH=lib python3 evaluation/6_local_inference.py \
         --model_id "$model" \
-        --test_fp "data/${domain}/benchmark/${p}/${qa_type}/${date}/sampled_${size}/${task}.jsonl" \
-        --output_fp "output/${domain}/${p}/${qa_type}/${date}/sampled_${size}/${task}/${model}.jsonl" \
+        --test_fp "$test_fp" \
+        --output_fp "$out_fp" \
         --temperature 0.6 \
         --max_model_len 13000 \
         --tensor_parallel_size 1 \
