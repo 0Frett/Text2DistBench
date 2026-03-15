@@ -1,9 +1,8 @@
 # Text2DistBench
+[![HuggingFace Dataset](https://img.shields.io/badge/HuggingFace-Dataset-yellow)](https://huggingface.co/datasets/frett/Text2DistBench)
 
 Reference code for **Text2DistBench**, a fully automated reading comprehension benchmark for evaluating whether LLMs can infer distributional knowledge from natural language evidence.
-Given metadata and a set of user comments about an entity (e.g., a movie or song), models must estimate statistics such as:
-stance distribution, topic distribution, and most/second-most frequent labels.
-
+Given metadata and a set of user comments about an entity (e.g., a movie or song), models must estimate statistics such as: stance distribution, topic distribution, and most/second-most frequent labels. The benchmark dataset is publicly available on Hugging Face and will be continuously updated.
 
 ## Overview
 
@@ -18,7 +17,6 @@ This repository provides two main workflows:
 2. **Model evaluation**
    - run model inference on generated benchmarks
    - evaluate question predictions
-
 
 
 

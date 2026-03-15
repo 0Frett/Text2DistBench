@@ -1,6 +1,7 @@
 import os
 import json
 import argparse
+import uuid
 import random
 from typing import Dict, List, Any, Tuple
 import pandas as pd
@@ -24,15 +25,16 @@ def _make_prompt(system_prompt: str, question: str) -> str:
     return system_prompt.rstrip() + "\n\n" + question.lstrip()
 
 
-def make_qa(qtype: str, question: str, answer: Dict[str, Any], ref_dist: Dict[str, Any],
+def make_qa(domain:str, qtype: str, question: str, answer: Dict[str, Any], ref_dist: Dict[str, Any],
             attribute: str, video_title: str, idx: int) -> Dict[str, Any]:
     return {
-        "qid": f"top2_{video_title}_{qtype}_{idx}",
-        # "attribute": attribute,  # "stance"/"target"/specific target/stance/"joint"
+        "qid": str(uuid.uuid4()),
+        "task": "Second_Freq",
+        "domain": domain,
+        "distribution_type": qtype,          # P_s | P_t | P_s_cond_t | P_t_cond_s | P_ts
+        "source": video_title,
         "answer": answer,
         "ref_dist": ref_dist,
-        "qtype": qtype,          # P_s | P_t | P_s_cond_t | P_t_cond_s | P_ts
-        "source": video_title,
         "question": question,
     }
 
@@ -115,6 +117,7 @@ def _marginals_and_conditionals(counts_df: pd.DataFrame,
 # QA generators (use stats)
 # ------------------------
 def gen_pred_dist_question(
+    domain: str,
     video_title: str,
     meta_data: str,
     comments_block: str,
@@ -122,7 +125,8 @@ def gen_pred_dist_question(
     post_template,
     prior_template,
     qa_type: str,
-    is_prior: bool) -> List[Dict[str, Any]]:
+    is_prior: bool
+) -> List[Dict[str, Any]]:
     
     """
     Produces QA items matching the 5 templates.
@@ -162,7 +166,7 @@ def gen_pred_dist_question(
         if len(unique_values) >= 2:
             second_value = unique_values[1]
             answer = [k for k, v in ref_dist.items() if v == second_value]
-            qa_sets.append(make_qa("P_s", _make_prompt(sys_prompt, question), answer, ref_dist, "margin_s", video_title, 0))
+            qa_sets.append(make_qa(domain, "P_s", _make_prompt(sys_prompt, question), answer, ref_dist, "margin_s", video_title, 0))
 
     # --- P(T): single QA item ---
     elif qa_type == "P_t":
@@ -175,7 +179,7 @@ def gen_pred_dist_question(
         if len(unique_values) >= 2:
             second_value = unique_values[1]
             answer = [k for k, v in ref_dist.items() if v == second_value]
-            qa_sets.append(make_qa("P_t", _make_prompt(sys_prompt, question), answer, ref_dist, "margin_t", video_title, 0))
+            qa_sets.append(make_qa(domain, "P_t", _make_prompt(sys_prompt, question), answer, ref_dist, "margin_t", video_title, 0))
 
     # --- P(S|T): one item per target ---
     elif qa_type == "P_s_cond_t":
@@ -189,7 +193,7 @@ def gen_pred_dist_question(
             if len(unique_values) >= 2:
                 second_value = unique_values[1]
                 answer = [k for k, v in ref_dist.items() if v == second_value]
-                qa_sets.append(make_qa("P_s_cond_t", _make_prompt(sys_prompt, question), answer, ref_dist, tgt, video_title, i))
+                qa_sets.append(make_qa(domain, "P_s_cond_t", _make_prompt(sys_prompt, question), answer, ref_dist, tgt, video_title, i))
 
     # --- P(T|S): one item per stance ---
     elif qa_type == "P_t_cond_s":
@@ -203,7 +207,7 @@ def gen_pred_dist_question(
             if len(unique_values) >= 2:
                 second_value = unique_values[1]
                 answer = [k for k, v in ref_dist.items() if v == second_value]
-                qa_sets.append(make_qa("P_t_cond_s", _make_prompt(sys_prompt, question), answer, ref_dist, stance, video_title, i))
+                qa_sets.append(make_qa(domain, "P_t_cond_s", _make_prompt(sys_prompt, question), answer, ref_dist, stance, video_title, i))
 
     # --- P(S,T): single joint item ---
     elif qa_type == "P_ts":
@@ -216,7 +220,7 @@ def gen_pred_dist_question(
         if len(unique_values) >= 2:
             second_value = unique_values[1]
             answer = [k for k, v in ref_dist.items() if v == second_value]
-            qa_sets.append(make_qa("P_ts", _make_prompt(sys_prompt, question), answer, ref_dist, "joint", video_title, 0))
+            qa_sets.append(make_qa(domain, "P_ts", _make_prompt(sys_prompt, question), answer, ref_dist, "joint", video_title, 0))
 
     else:
         raise ValueError("Wrong QA Type")
@@ -279,7 +283,7 @@ def main(
         comments_str = "\n".join([f"{idx+1}. {c}" for idx, c in enumerate(comments)])
 
         qas = gen_pred_dist_question(
-            unit_name, meta_data, comments_str, op_units, 
+            domain, unit_name, meta_data, comments_str, op_units, 
             post_template, prior_template, qa_type, is_prior)
         test_qs.extend(qas)
 

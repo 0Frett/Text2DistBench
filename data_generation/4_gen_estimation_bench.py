@@ -2,6 +2,7 @@ import os
 import json
 import argparse
 import random
+import uuid
 from typing import Dict, List, Any, Tuple
 import pandas as pd
 from collections import defaultdict
@@ -22,17 +23,20 @@ def _make_prompt(system_prompt: str, question: str) -> str:
     return system_prompt.rstrip() + "\n\n" + question.lstrip()
 
 
-def make_qa(qtype: str, question: str, answer: Dict[str, Any],
+
+def make_qa(domain:str, qtype: str, question: str, answer: Dict[str, Any],
             attribute: str, video_title: str, idx: int) -> Dict[str, Any]:
     return {
-        "qid": f"estimation_{video_title}_{qtype}_{idx}",
-        # "attribute": attribute,  # "stance"/"target"/specific target/stance/"joint"
+        "qid": str(uuid.uuid4()),
+        "task": "Estimation",
+        "domain": domain,
+        "distribution_type": qtype,          # P_s | P_t | P_s_cond_t | P_t_cond_s | P_ts
+        "source": video_title,
         "answer": answer,
         "ref_dist": answer,
-        "qtype": qtype,
-        "source": video_title,
         "question": question,
     }
+
 
 
 # ------------------------
@@ -113,6 +117,7 @@ def _marginals_and_conditionals(counts_df: pd.DataFrame,
 # QA generators (use stats)
 # ------------------------
 def gen_pred_dist_question(
+    domain: str,
     video_title: str,
     meta_data: str,
     comments_block: str,
@@ -156,7 +161,7 @@ def gen_pred_dist_question(
         else:
             question = post_template.EST_S_TEMPLATE
         answer = {STANCE_MAP[s]: 100*pS.get(s, 0.0) for s in STANCES}
-        qa_sets.append(make_qa("P_s", _make_prompt(sys_prompt, question), answer, "margin_s", video_title, 0))
+        qa_sets.append(make_qa(domain, "P_s", _make_prompt(sys_prompt, question), answer, "margin_s", video_title, 0))
 
     # --- P(T): single QA item ---
     elif qa_type == "P_t":
@@ -165,7 +170,7 @@ def gen_pred_dist_question(
         else:
             question = post_template.EST_T_TEMPLATE
         answer = {t: 100*pT.get(t, 0.0) for t in target_set}
-        qa_sets.append(make_qa("P_t", _make_prompt(sys_prompt, question), answer, "margin_t", video_title, 0))
+        qa_sets.append(make_qa(domain, "P_t", _make_prompt(sys_prompt, question), answer, "margin_t", video_title, 0))
 
     # --- P(S|T): one item per target ---
     elif qa_type == "P_s_cond_t":
@@ -175,7 +180,7 @@ def gen_pred_dist_question(
             else:
                 question = post_template.EST_S_cond_T_TEMPLATE.format(topic=tgt)
             answer = {STANCE_MAP[s]: 100*pS_given_T.get(tgt, {}).get(s, 0.0) for s in STANCES}
-            qa_sets.append(make_qa("P_s_cond_t", _make_prompt(sys_prompt, question), answer, tgt, video_title, i))
+            qa_sets.append(make_qa(domain, "P_s_cond_t", _make_prompt(sys_prompt, question), answer, tgt, video_title, i))
 
     # --- P(T|S): one item per stance ---
     elif qa_type == "P_t_cond_s":
@@ -185,7 +190,7 @@ def gen_pred_dist_question(
             else:
                 question = post_template.EST_T_cond_S_TEMPLATE.format(stance_label=STANCE_MAP[stance])
             answer = {t: 100*pT_given_S.get(stance, {}).get(t, 0.0) for t in target_set}
-            qa_sets.append(make_qa("P_t_cond_s", _make_prompt(sys_prompt, question), answer, stance, video_title, i))
+            qa_sets.append(make_qa(domain, "P_t_cond_s", _make_prompt(sys_prompt, question), answer, stance, video_title, i))
 
     # --- P(S,T): single joint item ---
     elif qa_type == "P_ts":
@@ -194,7 +199,7 @@ def gen_pred_dist_question(
         else:
             question = post_template.EST_T_S_TEMPLATE
         answer = {f"({t},{STANCE_MAP[s]})": 100*pST.get(t, {}).get(s, 0.0) for t in target_set for s in STANCES}
-        qa_sets.append(make_qa("P_ts", _make_prompt(sys_prompt, question), answer, "joint", video_title, 0))
+        qa_sets.append(make_qa(domain, "P_ts", _make_prompt(sys_prompt, question), answer, "joint", video_title, 0))
 
     else:
         raise ValueError("Wrong QA Type")
@@ -257,7 +262,7 @@ def main(
         comments_str = "\n".join([f"{idx+1}. {c}" for idx, c in enumerate(comments)])
 
         qas = gen_pred_dist_question(
-            unit_name, meta_data, comments_str, op_units, 
+            domain, unit_name, meta_data, comments_str, op_units, 
             post_template, prior_template, qa_type, is_prior)
         test_qs.extend(qas)
 
