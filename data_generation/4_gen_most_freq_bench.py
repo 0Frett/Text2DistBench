@@ -26,8 +26,8 @@ def _make_prompt(system_prompt: str, question: str) -> str:
 
 
 def make_qa(domain:str, qtype: str, question: str, answer: Dict[str, Any], ref_dist: Dict[str, Any],
-            attribute: str, video_title: str, idx: int) -> Dict[str, Any]:
-    return {
+            video_title: str, meta_data: str, comments_block:str, is_prior:bool) -> Dict[str, Any]:
+    qa = {
         "qid": str(uuid.uuid4()),
         "task": "Most_Freq",
         "domain": domain,
@@ -36,7 +36,12 @@ def make_qa(domain:str, qtype: str, question: str, answer: Dict[str, Any], ref_d
         "answer": answer,
         "ref_dist": ref_dist,
         "question": question,
+        "meta_data": meta_data,
     }
+    if not is_prior:
+        qa["comments"] = comments_block
+    return qa
+
 
 # ------------------------
 # ingest stats (counts-only OR p_* CSV)
@@ -163,7 +168,7 @@ def gen_pred_dist_question(
         max_value = max(ref_dist.values())
         answer = [k for k, v in ref_dist.items() if v == max_value]
         if max_value != 0:
-            qa_sets.append(make_qa(domain, "P_s", _make_prompt(sys_prompt, question), answer, ref_dist, "margin_s", video_title, 0))
+            qa_sets.append(make_qa(domain, "P_s", _make_prompt(sys_prompt, question), answer, ref_dist, video_title, meta_data, comments_block, is_prior))
 
     # --- P(T): single QA item ---
     elif qa_type == "P_t":
@@ -175,7 +180,7 @@ def gen_pred_dist_question(
         max_value = max(ref_dist.values())
         answer = [k for k, v in ref_dist.items() if v == max_value]
         if max_value != 0:
-            qa_sets.append(make_qa(domain, "P_t", _make_prompt(sys_prompt, question), answer, ref_dist, "margin_t", video_title, 0))
+            qa_sets.append(make_qa(domain, "P_t", _make_prompt(sys_prompt, question), answer, ref_dist, video_title, meta_data, comments_block, is_prior))
 
     # --- P(S|T): one item per target ---
     elif qa_type == "P_s_cond_t":
@@ -188,7 +193,7 @@ def gen_pred_dist_question(
             max_value = max(ref_dist.values())
             answer = [k for k, v in ref_dist.items() if v == max_value]
             if max_value != 0:
-                qa_sets.append(make_qa(domain, "P_s_cond_t", _make_prompt(sys_prompt, question), answer, ref_dist, tgt, video_title, i))
+                qa_sets.append(make_qa(domain, "P_s_cond_t", _make_prompt(sys_prompt, question), answer, ref_dist, video_title, meta_data, comments_block, is_prior))
 
     # --- P(T|S): one item per stance ---
     elif qa_type == "P_t_cond_s":
@@ -201,7 +206,7 @@ def gen_pred_dist_question(
             max_value = max(ref_dist.values())
             answer = [k for k, v in ref_dist.items() if v == max_value]
             if max_value != 0:
-                qa_sets.append(make_qa(domain, "P_t_cond_s", _make_prompt(sys_prompt, question), answer, ref_dist, stance, video_title, i))
+                qa_sets.append(make_qa(domain, "P_t_cond_s", _make_prompt(sys_prompt, question), answer, ref_dist, video_title, meta_data, comments_block, is_prior))
 
     # --- P(S,T): single joint item ---
     elif qa_type == "P_ts":
@@ -213,7 +218,7 @@ def gen_pred_dist_question(
         max_value = max(ref_dist.values())
         answer = [k for k, v in ref_dist.items() if v == max_value]
         if max_value != 0:
-            qa_sets.append(make_qa(domain, "P_ts", _make_prompt(sys_prompt, question), answer, ref_dist, "joint", video_title, 0))
+            qa_sets.append(make_qa(domain, "P_ts", _make_prompt(sys_prompt, question), answer, ref_dist, video_title, meta_data, comments_block, is_prior))
 
     else:
         raise ValueError("Wrong QA Type")
