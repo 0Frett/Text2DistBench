@@ -56,7 +56,10 @@ Each instance corresponds to a distributional reading comprehension question.
   "answer": < answer (mode label or distribution depending on task) >,
   "ref_dist": < Ground-truth distribution over labels >,
   "question": < Full prompt shown to model (instruction + evidence + query) >,
-  "source": "< entity name >"
+  "source": "< entity name >",
+  "meta_data": "< text evidence >",
+  "comments": "< text evidence >",
+  "condition": "< conditioning variable for P(s|t), P(t|s) >",
 }
 ```
 
