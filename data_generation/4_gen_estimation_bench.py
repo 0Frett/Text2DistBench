@@ -25,12 +25,14 @@ def _make_prompt(system_prompt: str, question: str) -> str:
 
 
 def make_qa(domain:str, qtype: str, question: str, answer: Dict[str, Any],
-            video_title: str, meta_data: str, comments_block:str, is_prior:bool) -> Dict[str, Any]:
+            video_title: str, meta_data: str, comments_block:str, 
+            is_prior:bool, condition:str) -> Dict[str, Any]:
     qa = {
         "qid": str(uuid.uuid4()),
         "task": "Estimation",
         "domain": domain,
         "distribution_type": qtype,          # P_s | P_t | P_s_cond_t | P_t_cond_s | P_ts
+        "condition": condition,
         "source": video_title,
         "answer": answer,
         "ref_dist": answer,
@@ -165,7 +167,11 @@ def gen_pred_dist_question(
         else:
             question = post_template.EST_S_TEMPLATE
         answer = {STANCE_MAP[s]: 100*pS.get(s, 0.0) for s in STANCES}
-        qa_sets.append(make_qa(domain, "P_s", _make_prompt(sys_prompt, question), answer, video_title, meta_data, comments_block, is_prior))
+        qa_sets.append(
+            make_qa(
+                domain, "P_s", _make_prompt(sys_prompt, question), answer, 
+                video_title, meta_data, comments_block, 
+                is_prior, "NaN"))
 
     # --- P(T): single QA item ---
     elif qa_type == "P_t":
@@ -174,7 +180,11 @@ def gen_pred_dist_question(
         else:
             question = post_template.EST_T_TEMPLATE
         answer = {t: 100*pT.get(t, 0.0) for t in target_set}
-        qa_sets.append(make_qa(domain, "P_t", _make_prompt(sys_prompt, question), answer, video_title, meta_data, comments_block, is_prior))
+        qa_sets.append(
+            make_qa(
+                domain, "P_t", _make_prompt(sys_prompt, question), answer, 
+                video_title, meta_data, comments_block, 
+                is_prior, "NaN"))
 
     # --- P(S|T): one item per target ---
     elif qa_type == "P_s_cond_t":
@@ -184,7 +194,11 @@ def gen_pred_dist_question(
             else:
                 question = post_template.EST_S_cond_T_TEMPLATE.format(topic=tgt)
             answer = {STANCE_MAP[s]: 100*pS_given_T.get(tgt, {}).get(s, 0.0) for s in STANCES}
-            qa_sets.append(make_qa(domain, "P_s_cond_t", _make_prompt(sys_prompt, question), answer, video_title, meta_data, comments_block, is_prior))
+            qa_sets.append(
+                make_qa(
+                    domain, "P_s_cond_t", _make_prompt(sys_prompt, question), answer, 
+                    video_title, meta_data, comments_block, 
+                    is_prior, tgt))
 
     # --- P(T|S): one item per stance ---
     elif qa_type == "P_t_cond_s":
@@ -194,7 +208,11 @@ def gen_pred_dist_question(
             else:
                 question = post_template.EST_T_cond_S_TEMPLATE.format(stance_label=STANCE_MAP[stance])
             answer = {t: 100*pT_given_S.get(stance, {}).get(t, 0.0) for t in target_set}
-            qa_sets.append(make_qa(domain, "P_t_cond_s", _make_prompt(sys_prompt, question), answer, video_title, meta_data, comments_block, is_prior))
+            qa_sets.append(
+                make_qa(
+                    domain, "P_t_cond_s", _make_prompt(sys_prompt, question), answer, 
+                    video_title, meta_data, comments_block, 
+                    is_prior, stance))
 
     # --- P(S,T): single joint item ---
     elif qa_type == "P_ts":
@@ -203,7 +221,11 @@ def gen_pred_dist_question(
         else:
             question = post_template.EST_T_S_TEMPLATE
         answer = {f"({t},{STANCE_MAP[s]})": 100*pST.get(t, {}).get(s, 0.0) for t in target_set for s in STANCES}
-        qa_sets.append(make_qa(domain, "P_ts", _make_prompt(sys_prompt, question), answer, video_title, meta_data, comments_block, is_prior))
+        qa_sets.append(
+            make_qa(
+                domain, "P_ts", _make_prompt(sys_prompt, question), answer, 
+                video_title, meta_data, comments_block, 
+                is_prior, "NaN"))
 
     else:
         raise ValueError("Wrong QA Type")

@@ -26,12 +26,14 @@ def _make_prompt(system_prompt: str, question: str) -> str:
 
 
 def make_qa(domain:str, qtype: str, question: str, answer: Dict[str, Any], ref_dist: Dict[str, Any],
-            video_title: str, meta_data: str, comments_block:str, is_prior:bool) -> Dict[str, Any]:
+            video_title: str, meta_data: str, comments_block:str, 
+            is_prior:bool, condition:str) -> Dict[str, Any]:
     qa = {
         "qid": str(uuid.uuid4()),
         "task": "Most_Freq",
         "domain": domain,
         "distribution_type": qtype,          # P_s | P_t | P_s_cond_t | P_t_cond_s | P_ts
+        "condition": condition,
         "source": video_title,
         "answer": answer,
         "ref_dist": ref_dist,
@@ -168,7 +170,11 @@ def gen_pred_dist_question(
         max_value = max(ref_dist.values())
         answer = [k for k, v in ref_dist.items() if v == max_value]
         if max_value != 0:
-            qa_sets.append(make_qa(domain, "P_s", _make_prompt(sys_prompt, question), answer, ref_dist, video_title, meta_data, comments_block, is_prior))
+            qa_sets.append(
+                make_qa(
+                    domain, "P_s", _make_prompt(sys_prompt, question), 
+                    answer, ref_dist, video_title, meta_data, comments_block, 
+                    is_prior, "NaN"))
 
     # --- P(T): single QA item ---
     elif qa_type == "P_t":
@@ -180,7 +186,11 @@ def gen_pred_dist_question(
         max_value = max(ref_dist.values())
         answer = [k for k, v in ref_dist.items() if v == max_value]
         if max_value != 0:
-            qa_sets.append(make_qa(domain, "P_t", _make_prompt(sys_prompt, question), answer, ref_dist, video_title, meta_data, comments_block, is_prior))
+            qa_sets.append(
+                make_qa(
+                    domain, "P_t", _make_prompt(sys_prompt, question), 
+                    answer, ref_dist, video_title, meta_data, comments_block, 
+                    is_prior, "NaN"))
 
     # --- P(S|T): one item per target ---
     elif qa_type == "P_s_cond_t":
@@ -193,7 +203,11 @@ def gen_pred_dist_question(
             max_value = max(ref_dist.values())
             answer = [k for k, v in ref_dist.items() if v == max_value]
             if max_value != 0:
-                qa_sets.append(make_qa(domain, "P_s_cond_t", _make_prompt(sys_prompt, question), answer, ref_dist, video_title, meta_data, comments_block, is_prior))
+                qa_sets.append(
+                    make_qa(
+                        domain, "P_s_cond_t", _make_prompt(sys_prompt, question), 
+                        answer, ref_dist, video_title, meta_data, comments_block, 
+                        is_prior, tgt))
 
     # --- P(T|S): one item per stance ---
     elif qa_type == "P_t_cond_s":
@@ -206,7 +220,11 @@ def gen_pred_dist_question(
             max_value = max(ref_dist.values())
             answer = [k for k, v in ref_dist.items() if v == max_value]
             if max_value != 0:
-                qa_sets.append(make_qa(domain, "P_t_cond_s", _make_prompt(sys_prompt, question), answer, ref_dist, video_title, meta_data, comments_block, is_prior))
+                qa_sets.append(
+                    make_qa(
+                        domain, "P_t_cond_s", _make_prompt(sys_prompt, question), 
+                        answer, ref_dist, video_title, meta_data, comments_block, 
+                        is_prior, stance))
 
     # --- P(S,T): single joint item ---
     elif qa_type == "P_ts":
@@ -218,7 +236,11 @@ def gen_pred_dist_question(
         max_value = max(ref_dist.values())
         answer = [k for k, v in ref_dist.items() if v == max_value]
         if max_value != 0:
-            qa_sets.append(make_qa(domain, "P_ts", _make_prompt(sys_prompt, question), answer, ref_dist, video_title, meta_data, comments_block, is_prior))
+            qa_sets.append(
+                make_qa(
+                    domain, "P_ts", _make_prompt(sys_prompt, question), 
+                    answer, ref_dist, video_title, meta_data, comments_block, 
+                    is_prior, "NaN"))
 
     else:
         raise ValueError("Wrong QA Type")
