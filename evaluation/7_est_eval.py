@@ -241,15 +241,7 @@ def QA_eval(item, task, domain):
     if task == "P_ts":
         pred_dist = _parse_P_ts(item["response"], domain)
     
-    # normalize
-    total = sum(pred_dist.values())
-    if total > 0:
-        pred_dist = {k: v / total for k, v in pred_dist.items()}
-    else:
-        n = len(pred_dist)
-        pred_dist = {k: 0 for k in pred_dist} if n > 0 else {}
-    
-    # ground truth normalization
+    pred_dist = {k: float(v) / 100 for k, v in pred_dist.items()}
     gt_dist = item["answer"]  # {"positive": 50.0, "negative": 50.0}
     gt_dist = {k: float(v)/100 for k, v in gt_dist.items()}
 
