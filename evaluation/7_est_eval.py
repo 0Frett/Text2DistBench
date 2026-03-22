@@ -9,11 +9,10 @@ from eval_utils import top1_mass, top1_minus_top2_mass, js_between_uniform
 
 
 
-
 def extract_json_from_text(text):
     """
-    Attempts to extract the FIRST valid JSON object from the text.
-    Returns a Python dict if success, else None.
+    Extract the first balanced {...} block that can be parsed as a JSON object.
+    Returns the JSON string if success, else None.
     """
     text_fixed = (
         text.replace("“", '"').replace("”", '"')
@@ -21,7 +20,7 @@ def extract_json_from_text(text):
             .replace("{{", "{").replace("}}", "}")
     )
     text_fixed = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', text_fixed)
-    # 2. Find all {...} blocks using a bracket-matching approach
+
     stack = []
     start = None
     candidates = []
@@ -38,12 +37,15 @@ def extract_json_from_text(text):
                     candidates.append(text_fixed[start:i+1])
                     start = None
 
-    # 3. Try parsing each candidate
     for block in candidates:
-        return block
-    # print(text)
-    return None
+        try:
+            obj = json.loads(block)
+            if isinstance(obj, dict):
+                return block
+        except Exception:
+            continue
 
+    return None
 
 #  "P_s" "P_t" "P_s_cond_t" "P_t_cond_s" "P_ts"
 
