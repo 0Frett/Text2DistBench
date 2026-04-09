@@ -36,12 +36,9 @@ def main(
             info = client.get_movie_info(movie_title)
             # print(info)
             # Required fields check
-            # if not info.get("title"):
-            #     print(f"Skipping '{movie_title}': missing Title")
-            #     continue
-            # if not info.get("summary"):
-            #     print(f"Skipping '{movie_title}': missing Summary")
-            #     continue
+            if not info.get("summary"):
+                print(f"Skipping '{movie_title}': missing Summary")
+                continue
             if not info.get("top5cast"):
                 print(f"Skipping '{movie_title}': missing Casts")
                 continue
@@ -52,6 +49,7 @@ def main(
             info["release_dates"] = info.get("release_dates").get("US")
             info["aka"] = info.get("aka").get("US")
             info['title'] = re.sub(r"[^\w\-_. ]", "_", movie_title)
+            # info['synopsis'] = info.get("synopsis", "")
 
             movie_info.append(info)
             cnt += 1

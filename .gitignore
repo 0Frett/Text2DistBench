@@ -1,7 +1,8 @@
 .env
 eval
 output
-data
+data-vlatest
+data-v1
 **/__pycache__/
 test_env
 T2D_relevant

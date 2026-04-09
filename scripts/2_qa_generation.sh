@@ -2,7 +2,7 @@
 set -euo pipefail
 
 DOMAIN="movie"
-DATE_RANGE="2025-12-01_2026-03-01"
+DATE_RANGE="2026-01-01_2026-04-01"
 SAMPLE_TAG="sampled_50"
 
 QA_TYPES=("P_s" "P_t" "P_s_cond_t" "P_t_cond_s" "P_ts")
