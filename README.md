@@ -1,4 +1,5 @@
 # Text2DistBench
+[![arXiv](https://img.shields.io/badge/arXiv-2604.06201-b31b1b.svg)](https://arxiv.org/abs/2604.06201)
 [![HuggingFace Dataset](https://img.shields.io/badge/HuggingFace-Dataset-yellow)](https://huggingface.co/datasets/frett/Text2DistBench)
 
 Reference code for **Text2DistBench**, a fully automated reading comprehension benchmark for evaluating whether LLMs can infer distributional knowledge from natural language evidence.
